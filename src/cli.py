@@ -5,17 +5,40 @@ from typing import Optional
 import typer
 from rich import print
 
+from ai_analyzer.config import load_embed_config, load_llm_config
+from ai_analyzer.embeddings import build_embed_fn
+from ai_analyzer.ingest import ingest_corpus_with_embed
+from ai_analyzer.retrieval import embed_query, load_index, similarity_search
+
 app = typer.Typer(help="AI Delivery Risk & Requirement Analyzer (console edition).")
 
 
 @app.command()
-def ingest(data_dir: Path = typer.Argument(..., exists=True, dir_okay=True, readable=True)):
+def ingest(
+    data_dir: Path = typer.Argument(Path("data/curated"), exists=True, dir_okay=True, readable=True),
+    index_dir: Path = typer.Option(Path("data/index"), "--index-dir", "-i", dir_okay=True, writable=True),
+    force: bool = typer.Option(False, "--force", "-f", help="Rebuild even if an index already exists."),
+):
     """
-    Placeholder ingest command.
+    Load curated documents, chunk, embed, and persist a FAISS index.
+    """
+    index_path = index_dir / "index.faiss"
+    if index_path.exists() and not force:
+        print(f"[yellow]Index already exists at {index_path}. Use --force to rebuild.[/yellow]")
+        return
 
-    Loads curated documents, chunks, embeds, and persists an index.
-    """
-    print(f"[yellow]Ingest not yet implemented.[/yellow] Would read from: {data_dir}")
+    embed_config = load_embed_config()
+    embed_fn = build_embed_fn(embed_config)
+    try:
+        ingest_corpus_with_embed(data_dir, index_dir, embed_fn)
+    except ValueError as exc:
+        print(f"[red]Ingest failed:[/red] {exc}")
+        raise typer.Exit(code=1)
+
+    print(
+        f"[green]Ingest complete.[/green] Provider: {embed_config.provider}. "
+        f"Index saved to {index_dir}"
+    )
 
 
 @app.command()
@@ -27,11 +50,11 @@ def analyze(
     output: Optional[Path] = typer.Option(
         None, "--output", "-o", dir_okay=False, writable=True, help="Save JSON output to file."
     ),
+    index_dir: Path = typer.Option(Path("data/index"), "--index-dir", "-i", dir_okay=True, readable=True),
 ):
     """
-    Placeholder analysis command.
-
-    Accepts inline text or file input and would return a structured clarification report.
+    Retrieve context for a requirement and (soon) run full analysis.
+    Currently returns retrieved chunks plus the chosen LLM provider.
     """
     if not text and not file:
         raise typer.BadParameter("Provide either --text or --file.")
@@ -40,13 +63,37 @@ def analyze(
     if file:
         requirement = file.read_text(encoding="utf-8")
 
-    payload = {"message": "Analyze not yet implemented", "input": requirement}
+    llm_config = load_llm_config()
+    embed_config = load_embed_config()
+    embed_fn = build_embed_fn(embed_config)
+    try:
+        index, docstore = load_index(index_dir)
+    except FileNotFoundError:
+        print(
+            "[red]Index not found.[/red] Run "
+            f"[cyan]ai-analyze ingest {index_dir}[/cyan] first (or specify --index-dir)."
+        )
+        raise typer.Exit(code=1)
+    query_vec = embed_query(requirement, embed_fn)
+    retrieved = similarity_search(query_vec, index, docstore, top_k=5)
+
+    payload = {
+        "provider": llm_config.provider,
+        "model": llm_config.model,
+        "embed_provider": embed_config.provider,
+        "embed_model": embed_config.model,
+        "input": requirement,
+        "retrieved": [
+            {"text": r.text, "metadata": r.metadata, "score": r.score} for r in retrieved
+        ],
+        "note": "LLM reasoning pipeline coming next.",
+    }
     rendered = json.dumps(payload, indent=2)
     print(rendered)
 
     if output:
         output.write_text(rendered, encoding="utf-8")
-        print(f"[green]Wrote placeholder output to {output}[/green]")
+        print(f"[green]Wrote output to {output}[/green]")
 
 
 @app.command()

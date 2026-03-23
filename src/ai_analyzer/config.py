@@ -13,6 +13,14 @@ class LLMConfig:
     api_version: str | None = None
 
 
+@dataclass
+class EmbedConfig:
+    provider: str
+    api_key: str
+    model: str
+    base_url: str | None = None
+
+
 def load_llm_config() -> LLMConfig:
     """
     Load LLM configuration with support for OpenAI, Claude (Anthropic), and Gemini.
@@ -41,6 +49,28 @@ def load_llm_config() -> LLMConfig:
         return LLMConfig(provider, api_key, model, base_url)
 
     raise ValueError(f"Unsupported LLM_PROVIDER '{provider}'.")
+
+
+def load_embed_config() -> EmbedConfig:
+    """
+    Load embedding configuration. Default is OpenAI embeddings.
+    Supports: openai, gemini.
+    """
+    load_dotenv()
+    provider = os.getenv("EMBED_PROVIDER", "openai").lower()
+
+    if provider == "openai":
+        api_key = required("OPENAI_API_KEY")
+        model = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
+        base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        return EmbedConfig(provider, api_key, model, base_url)
+
+    if provider == "gemini":
+        api_key = required("GOOGLE_API_KEY")
+        model = os.getenv("GEMINI_EMBED_MODEL", "models/embedding-001")
+        return EmbedConfig(provider, api_key, model)
+
+    raise ValueError(f"Unsupported EMBED_PROVIDER '{provider}'. Choose 'openai' or 'gemini'.")
 
 
 def required(name: str) -> str:

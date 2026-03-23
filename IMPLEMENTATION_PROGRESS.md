@@ -15,9 +15,9 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done.
 - [ ] Capture provenance/version notes for future refreshes.
 
 ## 🔎 Ingestion & Retrieval
-- [ ] `ingest` command: load curated docs, light chunking, embed, persist index (`data/index/`) with FAISS/Chroma.
-- [ ] Retrieval service: top-k search with source tags and deterministic embedding cache to avoid recompute.
-- [ ] Idempotent re-runs and graceful missing-data warnings.
+- [x] `ingest` command: load curated docs, light chunking, embed, persist index (`data/index/`) with FAISS/Chroma.
+- [x] Retrieval service: top-k search with source tags and deterministic embedding cache to avoid recompute.
+- [x] Idempotent re-runs and graceful missing-data warnings.
 
 ## 🧠 Core Analysis Pipeline
 - [ ] Orchestrated flow: retrieve context -> LLM reasoning -> helper tools -> merge into structured JSON.

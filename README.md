@@ -145,8 +145,6 @@ After generating results, the agent performs a self-evaluation step:
 
 ---
 
-## 📊 Evaluation Approach
-
 The system evaluates its outputs using:
 
 * Completeness of clarification
@@ -154,7 +152,7 @@ The system evaluates its outputs using:
 * Consistency with retrieved context
 * Self-reflection scoring mechanism
 ## Structured Output Contract
-The analyzer returns a single JSON object with these fields:
+The analyzer returns a single JSON object:
 - `summary` — one or two sentences restating the requirement.
 - `ambiguities` — array of `{ issue, impact?, severity? }`.
 - `questions` — list of clarification questions.
@@ -163,13 +161,17 @@ The analyzer returns a single JSON object with these fields:
 - `reflection` — optional self-critique or notes on assumptions.
 
 ### Risk & Confidence Bands
-- Risk: 0.0–0.2 low, 0.2–0.6 medium, 0.6–1.0 high.
-- Confidence: 0.0–0.3 low, 0.3–0.7 moderate, 0.7–1.0 high. If confidence < 0.5, reflection should explain why.
+- Risk: 0.0–0.2 low; 0.2–0.6 medium; 0.6–1.0 high.
+- Confidence: 0.0–0.3 low; 0.3–0.7 moderate; 0.7–1.0 high. If confidence < 0.5, reflection should explain why.
 
----
+### Configuration
+  - `LLM_PROVIDER`: `openai` | `claude` | `gemini`
+  - `EMBED_PROVIDER`: `openai` | `gemini`
+  - Models and keys are set in `.env` (see `.env.example`):
+    - OpenAI: `OPENAI_MODEL`, `OPENAI_EMBED_MODEL`, `OPENAI_API_KEY`
+    - Claude: `ANTHROPIC_MODEL`, `ANTHROPIC_API_KEY`
+    - Gemini: `GEMINI_MODEL`, `GEMINI_EMBED_MODEL`, `GOOGLE_API_KEY`
+  - The LLM provider (generation) is independent from the embedding provider (retrieval). Choose any combination without code changes.
 
-## 🚀 Conclusion
-
-This project demonstrates how agentic AI systems can be applied to real-world delivery challenges by combining structured reasoning, contextual knowledge retrieval, and iterative self-evaluation.
-
-Rather than replacing human decision-making, the agent acts as a support layer that enhances requirement clarity, reduces ambiguity, and improves alignment across teams.
+## Conclusion
+This system aims to support delivery planning by combining structured reasoning, contextual retrieval, and iterative self-evaluation—augmenting, not replacing, human decision-making.
