@@ -153,6 +153,18 @@ The system evaluates its outputs using:
 * Relevance of generated questions
 * Consistency with retrieved context
 * Self-reflection scoring mechanism
+## Structured Output Contract
+The analyzer returns a single JSON object with these fields:
+- `summary` — one or two sentences restating the requirement.
+- `ambiguities` — array of `{ issue, impact?, severity? }`.
+- `questions` — list of clarification questions.
+- `risk` — `{ score, rationale? }`, where `score` is 0–1 (higher = greater delivery risk).
+- `confidence` — number 0–1 (self-reported confidence in the report).
+- `reflection` — optional self-critique or notes on assumptions.
+
+### Risk & Confidence Bands
+- Risk: 0.0–0.2 low, 0.2–0.6 medium, 0.6–1.0 high.
+- Confidence: 0.0–0.3 low, 0.3–0.7 moderate, 0.7–1.0 high. If confidence < 0.5, reflection should explain why.
 
 ---
 

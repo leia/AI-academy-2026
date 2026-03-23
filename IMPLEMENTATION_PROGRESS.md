@@ -6,8 +6,8 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done.
 
 ## 📐 Scope & Output Schema
 - [x] Finalize pydantic models for `RequirementSummary`, `Ambiguity`, `RiskAssessment`, `ClarificationReport` (fields: summary, ambiguities, questions, risk_score 0-1, reflection, confidence).
-- [ ] Document the JSON contract in README and CLI help.
-- [ ] Define risk/confidence scales and wording bands for consistent messaging.
+- [x] Document the JSON contract in README and CLI help.
+- [x] Define risk/confidence scales and wording bands for consistent messaging.
 
 ## 📚 Curated Knowledge Base
 - [ ] Assemble curated dataset: sample requirements, ambiguity patterns, requirement-writing guidelines, clarified exemplars.
