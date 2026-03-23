@@ -139,7 +139,7 @@ After generating results, the agent performs a self-evaluation step:
 ## 🧰 Technology Stack
 
 * **Language:** Python
-* **LLM:** OpenAI API
+* **LLM:** `openai` (default), `claude`, or `gemini`.
 * **Retrieval:** Embeddings + vector store (or lightweight retrieval)
 * **Architecture:** Modular agent pipeline with tool orchestration
 
