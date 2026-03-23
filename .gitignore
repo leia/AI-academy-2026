@@ -1,0 +1,44 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg*
+.eggs/
+build/
+dist/
+*.dist-info
+.installed.cfg
+pip-wheel-metadata/
+
+# Virtual environments
+.venv/
+venv/
+
+# Environment/config
+.env
+.env.*
+.python-version
+
+# Tool caches
+.mypy_cache/
+.pytest_cache/
+coverage.*
+htmlcov/
+.cache/
+ruff_cache/
+
+# Editors/IDE
+.idea/
+.vscode/
+
+# Project data & logs
+data/index/
+runs/
+*.log
+
+# OS noise
+.DS_Store
+Thumbs.db
+.ipynb_checkpoints/
