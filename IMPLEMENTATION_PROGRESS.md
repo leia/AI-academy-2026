@@ -10,7 +10,7 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done.
 - [x] Define risk/confidence scales and wording bands for consistent messaging.
 
 ## 📚 Curated Knowledge Base
-- [ ] Assemble curated dataset: sample requirements, ambiguity patterns, requirement-writing guidelines, clarified exemplars.
+- [x] Assemble curated dataset: sample requirements, ambiguity patterns, requirement-writing guidelines, clarified exemplars.
 - [ ] Normalize format/metadata (source, type, tags) and store under `data/curated/`.
 - [ ] Capture provenance/version notes for future refreshes.
 
