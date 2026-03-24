@@ -44,7 +44,7 @@ def load_llm_config() -> LLMConfig:
 
     if provider == "gemini":
         api_key = required("GOOGLE_API_KEY")
-        model = os.getenv("GEMINI_MODEL", "gemini-1.5-pro")
+        model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
         base_url = "https://generativelanguage.googleapis.com"
         return LLMConfig(provider, api_key, model, base_url)
 
@@ -67,7 +67,7 @@ def load_embed_config() -> EmbedConfig:
 
     if provider == "gemini":
         api_key = required("GOOGLE_API_KEY")
-        model = os.getenv("GEMINI_EMBED_MODEL", "models/embedding-001")
+        model = os.getenv("GEMINI_EMBED_MODEL", "gemini-embedding-001")
         return EmbedConfig(provider, api_key, model)
 
     raise ValueError(f"Unsupported EMBED_PROVIDER '{provider}'. Choose 'openai' or 'gemini'.")

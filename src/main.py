@@ -35,6 +35,9 @@ def ingest(
     except ValueError as exc:
         print(f"[red]Ingest failed:[/red] {exc}")
         raise typer.Exit(code=1)
+    except Exception as exc:
+        print(f"[red]Ingest failed unexpectedly:[/red] {exc}")
+        raise typer.Exit(code=1)
 
     print(
         f"[green]Ingest complete.[/green] Provider: {embed_config.provider}. "

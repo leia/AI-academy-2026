@@ -71,7 +71,11 @@ def chunk_documents(docs: List[DocumentChunk], max_words: int = 220) -> List[Doc
 
 def embed_chunks(chunks: List[DocumentChunk], embed_fn: Callable[[List[str]], np.ndarray]) -> np.ndarray:
     texts = [c.text for c in chunks]
-    vectors = embed_fn(texts)
+    try:
+        vectors = embed_fn(texts)
+    except Exception as exc:
+        # Wrap provider-specific errors with context so the CLI can surface them cleanly
+        raise ValueError(f"Embedding failed: {exc}") from exc
     return np.array(vectors, dtype="float32")
 
 

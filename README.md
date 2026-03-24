@@ -140,7 +140,8 @@ After generating results, the agent performs a self-evaluation step:
 
 * **Language:** Python
 * **LLM:** `openai` (default), `claude`, or `gemini`.
-* **Retrieval:** Embeddings + vector store (or lightweight retrieval)
+* **Embeddings:** `openai` or `gemini` (configurable, independent of LLM choice)
+* **Retrieval:** Embeddings + FAISS
 * **Architecture:** Modular agent pipeline with tool orchestration
 
 ---
@@ -170,7 +171,7 @@ The analyzer returns a single JSON object:
   - Models and keys are set in `.env` (see `.env.example`):
     - OpenAI: `OPENAI_MODEL`, `OPENAI_EMBED_MODEL`, `OPENAI_API_KEY`
     - Claude: `ANTHROPIC_MODEL`, `ANTHROPIC_API_KEY`
-    - Gemini: `GEMINI_MODEL`, `GEMINI_EMBED_MODEL`, `GOOGLE_API_KEY`
+  - Gemini: `GEMINI_MODEL`, `GEMINI_EMBED_MODEL` (e.g., `text-embedding-004`), `GOOGLE_API_KEY`
   - The LLM provider (generation) is independent of the embedding provider (retrieval). Choose any combination without code changes.
 
 ## Conclusion

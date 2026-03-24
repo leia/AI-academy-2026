@@ -60,7 +60,10 @@ def run_analysis(
     raw = chat(messages, llm_config)
     report = parse_or_fallback(raw, requirement, heuristics)
     if enable_reflection:
-        report = reflect(report, llm_config)
+        try:
+            report = reflect(report, llm_config)
+        except Exception as exc:
+            report.reflection = f"Reflection failed: {exc}"
     return report
 
 

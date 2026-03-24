@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Dict, Any
+from typing import Dict, List
 
 from anthropic import Anthropic
 from openai import OpenAI
@@ -34,18 +34,32 @@ def chat(messages: List[Dict[str, str]], config: LLMConfig, max_tokens: int = 80
         return resp.content[0].text
 
     if config.provider == "gemini":
-        import google.generativeai as genai
+        try:
+            from google import genai
+            from google.genai import types as genai_types
+        except ImportError as exc:
+            raise ImportError(
+                "google-genai is required for GEMINI generation. Install with `pip install google-genai`."
+            ) from exc
 
-        genai.configure(api_key=config.api_key)
-        # Flatten to a single prompt string; Gemini v1 does not support multi-turn in the same way.
+        client = genai.Client(api_key=config.api_key)
+        model_name = config.model
+        #if not model_name.startswith("models/"):
+        #    model_name = f"models/{model_name}"
+
+        # Flatten system + user into a single text prompt
         system_parts = [m["content"] for m in messages if m["role"] == "system"]
         user_parts = [m["content"] for m in messages if m["role"] == "user"]
         prompt = ""
         if system_parts:
             prompt += "System:\n" + "\n".join(system_parts) + "\n\n"
         prompt += "User:\n" + "\n".join(user_parts)
-        model = genai.GenerativeModel(config.model)
-        resp = model.generate_content(prompt)
+
+        resp = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=genai_types.GenerateContentConfig(max_output_tokens=max_tokens),
+        )
         return resp.text
 
     raise ValueError(f"Unsupported provider: {config.provider}")
