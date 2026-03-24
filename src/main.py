@@ -28,7 +28,12 @@ def ingest(
         print(f"[yellow]Index already exists at {index_path}. Use --force to rebuild.[/yellow]")
         return
 
-    embed_config = load_embed_config()
+    try:
+        embed_config = load_embed_config()
+    except ValueError as exc:
+        print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=1)
+
     embed_fn = build_embed_fn(embed_config)
     try:
         ingest_corpus_with_embed(data_dir, index_dir, embed_fn)
@@ -58,6 +63,8 @@ def analyze(
     no_reflect: bool = typer.Option(
         False, "--no-reflect", help="Skip the reflection pass to save tokens/time."
     ),
+    debug_raw: bool = typer.Option(False, "--debug-raw", help="Print raw model JSON responses."),
+    debug_reflect: bool = typer.Option(False, "--debug-reflect", help="Print raw reflection JSON response."),
     index_dir: Path = typer.Option(Path("data/index"), "--index-dir", "-i", dir_okay=True, readable=True),
 ):
     """
@@ -70,8 +77,12 @@ def analyze(
     if file:
         requirement = file.read_text(encoding="utf-8")
 
-    llm_config = load_llm_config()
-    embed_config = load_embed_config()
+    try:
+        llm_config = load_llm_config()
+        embed_config = load_embed_config()
+    except ValueError as exc:
+        print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=1)
     embed_fn = build_embed_fn(embed_config)
     try:
         index, docstore = load_index(index_dir)
@@ -85,7 +96,14 @@ def analyze(
     retrieved = similarity_search(query_vec, index, docstore, top_k=k)
 
     contexts = [ContextItem(text=r.text, metadata=r.metadata, score=r.score) for r in retrieved]
-    report = run_analysis(requirement, contexts, llm_config, enable_reflection=not no_reflect)
+    report = run_analysis(
+        requirement,
+        contexts,
+        llm_config,
+        enable_reflection=not no_reflect,
+        debug_raw=debug_raw,
+        debug_reflect=debug_reflect,
+    )
     rendered = report.model_dump_json(indent=2)
     print(rendered)
 
@@ -123,7 +141,11 @@ def eval(
         )
         raise typer.Exit(code=1)
 
-    results = run_eval(fixtures, index_dir, k=k)
+    try:
+        results = run_eval(fixtures, index_dir, k=k)
+    except ValueError as exc:
+        print(f"[red]Configuration error:[/red] {exc}")
+        raise typer.Exit(code=1)
     print(json.dumps(results, indent=2))
 
 

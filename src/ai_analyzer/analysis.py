@@ -42,14 +42,18 @@ def run_analysis(
     contexts: List[ContextItem],
     llm_config: LLMConfig,
     enable_reflection: bool = True,
+    debug_raw: bool = False,
+    debug_reflect: bool = False,
 ) -> ClarificationReport:
     heuristics = detect_ambiguities(requirement)
     messages = build_prompt(requirement, contexts, heuristics)
     raw = chat(messages, llm_config)
+    if debug_raw:
+        print(f"[DEBUG] model raw:\n{raw}\n")
     report = parse_or_fallback(raw, requirement, heuristics)
     if enable_reflection:
         try:
-            report = reflect(report, llm_config)
+            report = reflect(report, llm_config, debug_reflect=debug_reflect)
         except Exception as exc:
             report.reflection = f"Reflection failed: {exc}"
     return report

@@ -58,7 +58,10 @@ def chat(messages: List[Dict[str, str]], config: LLMConfig, max_tokens: int = 80
         resp = client.models.generate_content(
             model=model_name,
             contents=prompt,
-            config=genai_types.GenerateContentConfig(max_output_tokens=max_tokens),
+            config=genai_types.GenerateContentConfig(
+                max_output_tokens=max_tokens,
+                response_mime_type="application/json",
+            ),
         )
         return resp.text
 

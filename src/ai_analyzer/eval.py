@@ -47,4 +47,9 @@ def run_eval(fixtures_path: Path, index_dir: Path, k: int = 5) -> List[Dict]:
     results = []
     for fx in fixtures:
         results.append(run_fixture(fx, index_dir, k=k))
-    return results
+    summary = {
+        "fixtures": len(results),
+        "total_ambiguity_hits": sum(r["checks"]["ambiguity_hits"] for r in results),
+        "total_question_hits": sum(r["checks"]["question_hits"] for r in results),
+    }
+    return {"summary": summary, "results": results}

@@ -9,10 +9,12 @@ from ai_analyzer.schemas import ClarificationReport
 from ai_analyzer.prompts import REFLECTION_SYSTEM
 
 
-def reflect(report: ClarificationReport, llm_config: LLMConfig) -> ClarificationReport:
+def reflect(report: ClarificationReport, llm_config: LLMConfig, debug_reflect: bool = False) -> ClarificationReport:
     user = f"Here is the report to critique:\n\n{report.model_dump_json(indent=2)}"
     messages = [{"role": "system", "content": REFLECTION_SYSTEM}, {"role": "user", "content": user}]
-    raw = chat(messages, llm_config, max_tokens=400)
+    raw = chat(messages, llm_config, max_tokens=1500)
+    if debug_reflect:
+        print(f"[DEBUG] reflection raw:\n{raw}\n")
     try:
         data = json.loads(raw)
     except Exception:
