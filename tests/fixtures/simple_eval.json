@@ -1,0 +1,14 @@
+[
+  {
+    "name": "dashboard_ux_login",
+    "input": "Improve dashboard UX and fix login issue before release.",
+    "expect_ambiguities": ["ux", "login", "acceptance"],
+    "expect_questions_contains": ["specific", "metrics", "login"]
+  },
+  {
+    "name": "push_notifications",
+    "input": "Build mobile push notifications for critical alerts with a 5-minute delivery SLA.",
+    "expect_ambiguities": ["platform", "opt-in"],
+    "expect_questions_contains": ["iOS", "Android", "quiet hours"]
+  }
+]

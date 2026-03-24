@@ -54,6 +54,7 @@ def analyze(
     output: Optional[Path] = typer.Option(
         None, "--output", "-o", dir_okay=False, writable=True, help="Save JSON output to file."
     ),
+    k: int = typer.Option(5, "--k", help="Top-k retrieved chunks to use."),
     no_reflect: bool = typer.Option(
         False, "--no-reflect", help="Skip the reflection pass to save tokens/time."
     ),
@@ -81,7 +82,7 @@ def analyze(
         )
         raise typer.Exit(code=1)
     query_vec = embed_query(requirement, embed_fn)
-    retrieved = similarity_search(query_vec, index, docstore, top_k=5)
+    retrieved = similarity_search(query_vec, index, docstore, top_k=k)
 
     contexts = [ContextItem(text=r.text, metadata=r.metadata, score=r.score) for r in retrieved]
     report = run_analysis(requirement, contexts, llm_config, enable_reflection=not no_reflect)
@@ -98,6 +99,7 @@ def analyze(
                 "provider": llm_config.provider,
                 "model": llm_config.model,
                 "embed_provider": embed_config.provider,
+                "k": k,
                 "retrieved": [c.metadata for c in contexts],
                 "report": report.model_dump(),
             }
@@ -106,9 +108,23 @@ def analyze(
 
 
 @app.command()
-def eval(fixtures: Path = typer.Argument(..., exists=True, dir_okay=True, readable=True)):
-    """Placeholder evaluation harness runner."""
-    print(f"[yellow]Eval not yet implemented.[/yellow] Would load fixtures from: {fixtures}")
+def eval(
+    fixtures: Path = typer.Argument(..., exists=True, dir_okay=False, readable=True),
+    index_dir: Path = typer.Option(Path("data/index"), "--index-dir", "-i", dir_okay=True, readable=True),
+    k: int = typer.Option(5, "--k", help="Top-k retrieved chunks to use."),
+):
+    """Run lightweight evaluation over fixtures."""
+    try:
+        load_index(index_dir)
+    except FileNotFoundError:
+        print(
+            "[red]Index not found.[/red] Run "
+            f"[cyan]ai-analyze ingest {index_dir}[/cyan] first (or specify --index-dir)."
+        )
+        raise typer.Exit(code=1)
+
+    results = run_eval(fixtures, index_dir, k=k)
+    print(json.dumps(results, indent=2))
 
 
 if __name__ == "__main__":
