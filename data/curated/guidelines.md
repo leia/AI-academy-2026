@@ -1,5 +1,12 @@
 # Requirement Writing Guidelines (Concise)
 
+<!--
+source: curated
+type: guideline
+tags: writing, clarity
+version: 2026-03-24
+-->
+
 - State the primary outcome and who benefits.
 - Specify actors/roles and affected systems.
 - Include measurable acceptance criteria and SLAs.

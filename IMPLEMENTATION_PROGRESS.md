@@ -11,8 +11,8 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done.
 
 ## 📚 Curated Knowledge Base
 - [x] Assemble curated dataset: sample requirements, ambiguity patterns, requirement-writing guidelines, clarified exemplars.
-- [ ] Normalize format/metadata (source, type, tags) and store under `data/curated/`.
-- [ ] Capture provenance/version notes for future refreshes.
+- [x] Normalize format/metadata (source, type, tags) and store under `data/curated/`.
+- [x] Capture provenance/version notes for future refreshes.
 
 ## 🔎 Ingestion & Retrieval
 - [x] `ingest` command: load curated docs, light chunking, embed, persist index (`data/index/`) with FAISS/Chroma.

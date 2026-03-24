@@ -1,5 +1,12 @@
 # Clarified Examples
 
+<!--
+source: curated
+type: example
+tags: clarified, reference
+version: 2026-03-24
+-->
+
 ## Example 1
 - **Original:** Improve dashboard UX and fix login issue before release.
 - **Clarified:** Address top 3 usability complaints on the dashboard (navigation, filter reset, tooltip clarity) and resolve the intermittent SSO login failure for Okta users. Target completion before the April 15 release; success measured by <2% login error rate and user test SUS >75.
