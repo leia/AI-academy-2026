@@ -8,6 +8,7 @@ from ai_analyzer.analysis import ContextItem, run_analysis
 from ai_analyzer.config import load_embed_config, load_llm_config
 from ai_analyzer.embeddings import build_embed_fn
 from ai_analyzer.ingest import ingest_corpus_with_embed
+from ai_analyzer.logging_utils import save_run
 from ai_analyzer.retrieval import embed_query, load_index, similarity_search
 
 app = typer.Typer(help="AI Delivery Risk & Requirement Analyzer (console edition).")
@@ -84,6 +85,18 @@ def analyze(
     if output:
         output.write_text(rendered, encoding="utf-8")
         print(f"[green]Wrote output to {output}[/green]")
+    else:
+        run_path = save_run(
+            {
+                "input": requirement,
+                "provider": llm_config.provider,
+                "model": llm_config.model,
+                "embed_provider": embed_config.provider,
+                "retrieved": [c.metadata for c in contexts],
+                "report": report.model_dump(),
+            }
+        )
+        print(f"[blue]Logged run to {run_path}[/blue]")
 
 
 @app.command()

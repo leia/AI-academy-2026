@@ -22,7 +22,7 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done.
 ## 🧠 Core Analysis Pipeline
 - [x] Orchestrated flow: retrieve context -> LLM reasoning -> helper tools -> merge into structured JSON.
 - [x] Helper tools: ambiguity detector (pattern/regex), risk scorer (weighted heuristics), follow-up question generator (templates + heuristics/LLM fill).
-- [ ] Lightweight run logs (inputs/outputs) stored under `runs/` for traceability.
+- [x] Lightweight run logs (inputs/outputs) stored under `runs/` for traceability.
 
 ## 🔁 Self-Reflection Pass
 - [ ] Secondary LLM critique to flag missing info/over-assumptions, adjust confidence, optionally revise the report.
