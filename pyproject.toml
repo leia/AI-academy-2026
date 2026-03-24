@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-ai-analyze = "cli:app"
+ai-analyze = "main:app"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
