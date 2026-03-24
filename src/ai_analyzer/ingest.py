@@ -7,7 +7,6 @@ from typing import Callable, List, Tuple
 
 import faiss
 import numpy as np
-from tqdm import tqdm
 
 @dataclass
 class DocumentChunk:

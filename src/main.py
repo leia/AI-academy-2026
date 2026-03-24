@@ -1,10 +1,10 @@
-import json
 from pathlib import Path
 from typing import Optional
 
 import typer
 from rich import print
 
+from ai_analyzer.analysis import ContextItem, run_analysis
 from ai_analyzer.config import load_embed_config, load_llm_config
 from ai_analyzer.embeddings import build_embed_fn
 from ai_analyzer.ingest import ingest_corpus_with_embed
@@ -53,8 +53,7 @@ def analyze(
     index_dir: Path = typer.Option(Path("data/index"), "--index-dir", "-i", dir_okay=True, readable=True),
 ):
     """
-    Retrieve context for a requirement and (soon) run full analysis.
-    Currently returns retrieved chunks plus the chosen LLM provider.
+    Retrieve context for a requirement and run full analysis, returning a structured report.
     """
     if not text and not file:
         raise typer.BadParameter("Provide either --text or --file.")
@@ -77,18 +76,9 @@ def analyze(
     query_vec = embed_query(requirement, embed_fn)
     retrieved = similarity_search(query_vec, index, docstore, top_k=5)
 
-    payload = {
-        "provider": llm_config.provider,
-        "model": llm_config.model,
-        "embed_provider": embed_config.provider,
-        "embed_model": embed_config.model,
-        "input": requirement,
-        "retrieved": [
-            {"text": r.text, "metadata": r.metadata, "score": r.score} for r in retrieved
-        ],
-        "note": "LLM reasoning pipeline coming next.",
-    }
-    rendered = json.dumps(payload, indent=2)
+    contexts = [ContextItem(text=r.text, metadata=r.metadata, score=r.score) for r in retrieved]
+    report = run_analysis(requirement, contexts, llm_config)
+    rendered = report.model_dump_json(indent=2)
     print(rendered)
 
     if output:

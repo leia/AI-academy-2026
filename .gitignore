@@ -18,7 +18,6 @@ venv/
 
 # Environment/config
 .env
-.env.*
 .python-version
 
 # Tool caches

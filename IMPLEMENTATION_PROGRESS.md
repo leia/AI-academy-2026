@@ -20,8 +20,8 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done.
 - [x] Idempotent re-runs and graceful missing-data warnings.
 
 ## 🧠 Core Analysis Pipeline
-- [ ] Orchestrated flow: retrieve context -> LLM reasoning -> helper tools -> merge into structured JSON.
-- [ ] Helper tools: ambiguity detector (pattern/regex), risk scorer (weighted heuristics), follow-up question generator (templates + LLM fill).
+- [x] Orchestrated flow: retrieve context -> LLM reasoning -> helper tools -> merge into structured JSON.
+- [x] Helper tools: ambiguity detector (pattern/regex), risk scorer (weighted heuristics), follow-up question generator (templates + heuristics/LLM fill).
 - [ ] Lightweight run logs (inputs/outputs) stored under `runs/` for traceability.
 
 ## 🔁 Self-Reflection Pass
