@@ -15,6 +15,7 @@ from ai_analyzer.schemas import (
 )
 from ai_analyzer.reflection import reflect
 from ai_analyzer.tools import detect_ambiguities, generate_questions, score_risk
+from ai_analyzer.prompts import ANALYSIS_SYSTEM, ANALYSIS_USER_TEMPLATE
 
 
 @dataclass
@@ -25,28 +26,15 @@ class ContextItem:
 
 
 def build_prompt(requirement: str, contexts: List[ContextItem], heuristics: List[str]) -> list:
-    context_block = "\n\n".join(
+    context_block = "\n".join(
         [f"[{c.metadata.get('type','unknown')}|{c.metadata.get('source')}] {c.text}" for c in contexts]
     )
-    heuristic_block = "\n".join(f"- {h}" for h in heuristics)
+    heuristics_block = "\n".join(f"- {h}" for h in heuristics) if heuristics else "- none"
 
-    system = (
-        "You are a senior requirements analyst. Produce a structured JSON report with keys: "
-        "summary, ambiguities (list of {issue, impact?, severity?}), questions (list), "
-        "risk {score 0-1, rationale}, confidence 0-1, reflection (string). "
-        "Stay concise and actionable."
+    user = ANALYSIS_USER_TEMPLATE.format(
+        requirement=requirement, k=len(contexts), context_block=context_block, heuristics_block=heuristics_block
     )
-    user = f"""Requirement:
-{requirement}
-
-Retrieved context:
-{context_block}
-
-Heuristic ambiguity signals:
-{heuristic_block}
-
-Return only JSON."""
-    return [{"role": "system", "content": system}, {"role": "user", "content": user}]
+    return [{"role": "system", "content": ANALYSIS_SYSTEM}, {"role": "user", "content": user}]
 
 
 def run_analysis(

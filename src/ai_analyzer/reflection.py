@@ -6,13 +6,7 @@ from typing import List
 from ai_analyzer.config import LLMConfig
 from ai_analyzer.llm import chat
 from ai_analyzer.schemas import ClarificationReport
-
-
-REFLECTION_SYSTEM = """You are a critical reviewer of requirement analyses. Identify gaps, over-assumptions, or missing risks. Return JSON with keys:
-- gaps: list of strings
-- adjustments: optional object {confidence_delta: float between -0.5 and 0.5, risk_delta: float between -0.3 and 0.3}
-- revision: optional revised report (same schema as original)
-Be concise."""
+from ai_analyzer.prompts import REFLECTION_SYSTEM
 
 
 def reflect(report: ClarificationReport, llm_config: LLMConfig) -> ClarificationReport:
