@@ -30,17 +30,17 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done.
 - [x] Reflection notes appended to final output.
 
 ## 🛠️ CLI & Evaluation
-- [ ] CLI commands: `ingest`, `analyze --text|--file`, `eval` (fixture-driven smoke checks).
-- [ ] Evaluation harness: 3-5 fixtures scored against expected ambiguities/questions; printed scorecard.
-- [ ] `.env` validation with clear failure messages (OpenAI key, model name).
+- [x] CLI commands: `ingest`, `analyze --text|--file`, `eval` (fixture-driven smoke checks).
+- [x] Evaluation harness: 3-5 fixtures scored against expected ambiguities/questions; printed scorecard.
+- [x] `.env` validation with clear failure messages (OpenAI key, model name).
 
 ## 📝 Documentation & Quality
-- [ ] README update: workflow, data layout, CLI examples, output schema.
-- [ ] Architecture diagram (Mermaid/ASCII) in `docs/`.
-- [ ] Demo scenario script with expected sample output.
-- [ ] Smoke tests for ingest/analyze happy paths; note deferred full test suite.
+- [x] README update: workflow, data layout, CLI examples, output schema.
+- [x] Architecture diagram (Mermaid/ASCII) in `docs/`.
+- [x] Demo scenario script with expected sample output.
+- [x] Smoke tests for ingest/analyze happy paths; note deferred full test suite.
 
 ## 🎯 Immediate Focus
-- [ ] Scaffold project structure (`src/`, `cli.py`, `data/curated/`, `.env.example`, `pyproject.toml`).
-- [ ] Choose and pin dependency set (OpenAI, pydantic, python-dotenv, typer/rich, FAISS/Chroma).
-- [ ] Draft curated data stubs to unblock ingestion pipeline development.
+- [x] Scaffold project structure (`src/`, `cli.py`, `data/curated/`, `.env.example`, `pyproject.toml`).
+- [x] Choose and pin dependency set (OpenAI, pydantic, python-dotenv, typer/rich, FAISS/Chroma).
+- [x] Draft curated data stubs to unblock ingestion pipeline development.
