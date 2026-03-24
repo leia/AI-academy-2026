@@ -13,6 +13,7 @@ from ai_analyzer.schemas import (
     RequirementSummary,
     RiskAssessment,
 )
+from ai_analyzer.reflection import reflect
 from ai_analyzer.tools import detect_ambiguities, generate_questions, score_risk
 
 
@@ -52,11 +53,14 @@ def run_analysis(
     requirement: str,
     contexts: List[ContextItem],
     llm_config: LLMConfig,
+    enable_reflection: bool = True,
 ) -> ClarificationReport:
     heuristics = detect_ambiguities(requirement)
     messages = build_prompt(requirement, contexts, heuristics)
     raw = chat(messages, llm_config)
     report = parse_or_fallback(raw, requirement, heuristics)
+    if enable_reflection:
+        report = reflect(report, llm_config)
     return report
 
 

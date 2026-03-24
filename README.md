@@ -171,7 +171,7 @@ The analyzer returns a single JSON object:
     - OpenAI: `OPENAI_MODEL`, `OPENAI_EMBED_MODEL`, `OPENAI_API_KEY`
     - Claude: `ANTHROPIC_MODEL`, `ANTHROPIC_API_KEY`
     - Gemini: `GEMINI_MODEL`, `GEMINI_EMBED_MODEL`, `GOOGLE_API_KEY`
-  - The LLM provider (generation) is independent from the embedding provider (retrieval). Choose any combination without code changes.
+  - The LLM provider (generation) is independent of the embedding provider (retrieval). Choose any combination without code changes.
 
 ## Conclusion
 This system aims to support delivery planning by combining structured reasoning, contextual retrieval, and iterative self-evaluation—augmenting, not replacing, human decision-making.

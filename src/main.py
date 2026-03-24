@@ -51,6 +51,9 @@ def analyze(
     output: Optional[Path] = typer.Option(
         None, "--output", "-o", dir_okay=False, writable=True, help="Save JSON output to file."
     ),
+    no_reflect: bool = typer.Option(
+        False, "--no-reflect", help="Skip the reflection pass to save tokens/time."
+    ),
     index_dir: Path = typer.Option(Path("data/index"), "--index-dir", "-i", dir_okay=True, readable=True),
 ):
     """
@@ -78,7 +81,7 @@ def analyze(
     retrieved = similarity_search(query_vec, index, docstore, top_k=5)
 
     contexts = [ContextItem(text=r.text, metadata=r.metadata, score=r.score) for r in retrieved]
-    report = run_analysis(requirement, contexts, llm_config)
+    report = run_analysis(requirement, contexts, llm_config, enable_reflection=not no_reflect)
     rendered = report.model_dump_json(indent=2)
     print(rendered)
 

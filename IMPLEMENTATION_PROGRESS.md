@@ -25,9 +25,9 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done.
 - [x] Lightweight run logs (inputs/outputs) stored under `runs/` for traceability.
 
 ## 🔁 Self-Reflection Pass
-- [ ] Secondary LLM critique to flag missing info/over-assumptions, adjust confidence, optionally revise the report.
-- [ ] Configurable toggle and cost guardrails.
-- [ ] Reflection notes appended to final output.
+- [x] Secondary LLM critique to flag missing info/over-assumptions, adjust confidence, optionally revise the report.
+- [x] Configurable toggle and cost guardrails.
+- [x] Reflection notes appended to final output.
 
 ## 🛠️ CLI & Evaluation
 - [ ] CLI commands: `ingest`, `analyze --text|--file`, `eval` (fixture-driven smoke checks).
