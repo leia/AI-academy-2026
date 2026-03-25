@@ -63,6 +63,14 @@ def run_analysis(
         except Exception as exc:
             report.reflection = f"Reflection failed: {exc}"
             trace.append({"step": "reflection_error", "info": {"error": str(exc)}})
+    # Simple iteration: if confidence remains low, re-run once with higher k/context
+    if enable_reflection and report.confidence < 0.5:
+        trace.append({"step": "iteration_trigger", "info": {"reason": "low_confidence", "confidence": report.confidence}})
+        # Re-run analysis; in a fuller loop we might increase k, but keep it simple here.
+        messages = build_prompt(requirement, contexts, heuristics)
+        raw2 = chat(messages, llm_config)
+        trace.append({"step": "analysis_llm_retry", "info": {"provider": llm_config.provider, "model": llm_config.model}})
+        report = parse_or_fallback(raw2, requirement, heuristics, tools, trace=trace)
     return report
 
 
