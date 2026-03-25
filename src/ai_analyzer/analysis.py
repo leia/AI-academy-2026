@@ -14,7 +14,7 @@ from ai_analyzer.schemas import (
     RiskAssessment,
 )
 from ai_analyzer.reflection import reflect
-from ai_analyzer.tools import detect_ambiguities, generate_questions, score_risk
+from ai_analyzer.tools import detect_ambiguities, generate_questions, score_risk, decide_tools
 from ai_analyzer.prompts import ANALYSIS_SYSTEM, ANALYSIS_USER_TEMPLATE
 
 
@@ -49,12 +49,14 @@ def run_analysis(
     trace = trace if trace is not None else []
     heuristics = detect_ambiguities(requirement)
     trace.append({"step": "heuristics", "info": {"count": len(heuristics)}})
+    tools = decide_tools(heuristics)
+    trace.append({"step": "planner", "info": {"tools": tools}})
     messages = build_prompt(requirement, contexts, heuristics)
     raw = chat(messages, llm_config)
     trace.append({"step": "analysis_llm", "info": {"provider": llm_config.provider, "model": llm_config.model}})
     if debug_raw:
         print(f"[DEBUG] model raw:\n{raw}\n")
-    report = parse_or_fallback(raw, requirement, heuristics, trace=trace)
+    report = parse_or_fallback(raw, requirement, heuristics, tools, trace=trace)
     if enable_reflection:
         try:
             report = reflect(report, llm_config, debug_reflect=debug_reflect, trace=trace)
@@ -65,7 +67,11 @@ def run_analysis(
 
 
 def parse_or_fallback(
-    raw: str, requirement: str, heuristics: List[str], trace: Optional[List[Dict[str, Any]]] = None
+    raw: str,
+    requirement: str,
+    heuristics: List[str],
+    tools: List[str],
+    trace: Optional[List[Dict[str, Any]]] = None,
 ) -> ClarificationReport:
     trace = trace if trace is not None else []
     try:
@@ -76,7 +82,7 @@ def parse_or_fallback(
         # Heuristic fallback
         ambiguities = [Ambiguity(issue=h) for h in heuristics] if heuristics else []
         score, rationale = score_risk(len(ambiguities))
-        questions = generate_questions(heuristics)
+        questions = generate_questions(heuristics) if "question_generator" in tools else []
         return ClarificationReport(
             summary=RequirementSummary(text=requirement[:240]),
             ambiguities=ambiguities,

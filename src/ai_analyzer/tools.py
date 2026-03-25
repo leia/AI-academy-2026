@@ -72,3 +72,17 @@ def generate_questions(ambiguities: List[str]) -> List[str]:
     if not ambiguities:
         questions.append("What are the success metrics and acceptance criteria?")
     return questions
+
+
+def decide_tools(heuristics: List[str]) -> List[str]:
+    """
+    Simple planner to decide which helper tools to run.
+    Always runs ambiguity detection (already done); conditionally include follow-ups.
+    """
+    tools = ["ambiguity_detector"]
+    if heuristics:
+        tools.append("question_generator")
+        tools.append("risk_scorer")
+    else:
+        tools.append("question_generator")  # still useful even without detected ambiguities
+    return tools
