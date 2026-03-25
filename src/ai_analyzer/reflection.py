@@ -9,17 +9,26 @@ from ai_analyzer.schemas import ClarificationReport
 from ai_analyzer.prompts import REFLECTION_SYSTEM
 
 
-def reflect(report: ClarificationReport, llm_config: LLMConfig, debug_reflect: bool = False) -> ClarificationReport:
+def reflect(
+    report: ClarificationReport,
+    llm_config: LLMConfig,
+    debug_reflect: bool = False,
+    trace: list | None = None,
+) -> ClarificationReport:
     user = f"Here is the report to critique:\n\n{report.model_dump_json(indent=2)}"
     messages = [{"role": "system", "content": REFLECTION_SYSTEM}, {"role": "user", "content": user}]
     raw = chat(messages, llm_config, max_tokens=1500)
     if debug_reflect:
         print(f"[DEBUG] reflection raw:\n{raw}\n")
+    if trace is not None:
+        trace.append({"step": "reflection_llm", "info": {"provider": llm_config.provider, "model": llm_config.model}})
     try:
         data = json.loads(raw)
     except Exception:
         # If reflection fails, just annotate and return
         report.reflection = "Reflection failed to parse; keeping original report."
+        if trace is not None:
+            trace.append({"step": "reflection_parse_fallback", "info": {}})
         return report
 
     gaps: List[str] = data.get("gaps", [])

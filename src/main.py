@@ -65,6 +65,7 @@ def analyze(
     ),
     debug_raw: bool = typer.Option(False, "--debug-raw", help="Print raw model JSON responses."),
     debug_reflect: bool = typer.Option(False, "--debug-reflect", help="Print raw reflection JSON response."),
+    show_trace: bool = typer.Option(False, "--show-trace", help="Include decision trace in output."),
     index_dir: Path = typer.Option(Path("data/index"), "--index-dir", "-i", dir_okay=True, readable=True),
 ):
     """
@@ -96,6 +97,7 @@ def analyze(
     retrieved = similarity_search(query_vec, index, docstore, top_k=k)
 
     contexts = [ContextItem(text=r.text, metadata=r.metadata, score=r.score) for r in retrieved]
+    trace: list = [{"step": "retrieval", "info": {"k": k, "retrieved": len(retrieved)}}]
     report = run_analysis(
         requirement,
         contexts,
@@ -103,8 +105,12 @@ def analyze(
         enable_reflection=not no_reflect,
         debug_raw=debug_raw,
         debug_reflect=debug_reflect,
+        trace=trace,
     )
-    rendered = report.model_dump_json(indent=2)
+    if show_trace:
+        rendered = json.dumps({"report": report.model_dump(), "trace": trace}, indent=2)
+    else:
+        rendered = report.model_dump_json(indent=2)
     print(rendered)
 
     if output:
@@ -120,6 +126,7 @@ def analyze(
                 "k": k,
                 "retrieved": [c.metadata for c in contexts],
                 "report": report.model_dump(),
+                "trace": trace,
             }
         )
         print(f"[blue]Logged run to {run_path}[/blue]")

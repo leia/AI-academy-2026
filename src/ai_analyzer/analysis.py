@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 from ai_analyzer.config import LLMConfig
 from ai_analyzer.llm import chat
@@ -44,26 +44,35 @@ def run_analysis(
     enable_reflection: bool = True,
     debug_raw: bool = False,
     debug_reflect: bool = False,
+    trace: Optional[List[Dict[str, Any]]] = None,
 ) -> ClarificationReport:
+    trace = trace if trace is not None else []
     heuristics = detect_ambiguities(requirement)
+    trace.append({"step": "heuristics", "info": {"count": len(heuristics)}})
     messages = build_prompt(requirement, contexts, heuristics)
     raw = chat(messages, llm_config)
+    trace.append({"step": "analysis_llm", "info": {"provider": llm_config.provider, "model": llm_config.model}})
     if debug_raw:
         print(f"[DEBUG] model raw:\n{raw}\n")
-    report = parse_or_fallback(raw, requirement, heuristics)
+    report = parse_or_fallback(raw, requirement, heuristics, trace=trace)
     if enable_reflection:
         try:
-            report = reflect(report, llm_config, debug_reflect=debug_reflect)
+            report = reflect(report, llm_config, debug_reflect=debug_reflect, trace=trace)
         except Exception as exc:
             report.reflection = f"Reflection failed: {exc}"
+            trace.append({"step": "reflection_error", "info": {"error": str(exc)}})
     return report
 
 
-def parse_or_fallback(raw: str, requirement: str, heuristics: List[str]) -> ClarificationReport:
+def parse_or_fallback(
+    raw: str, requirement: str, heuristics: List[str], trace: Optional[List[Dict[str, Any]]] = None
+) -> ClarificationReport:
+    trace = trace if trace is not None else []
     try:
         data = json.loads(raw)
         return ClarificationReport.model_validate(data)
     except Exception:
+        trace.append({"step": "analysis_parse_fallback", "info": {}})
         # Heuristic fallback
         ambiguities = [Ambiguity(issue=h) for h in heuristics] if heuristics else []
         score, rationale = score_risk(len(ambiguities))

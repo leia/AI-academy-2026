@@ -46,7 +46,7 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done.
 - [x] Draft curated data stubs to unblock ingestion pipeline development.
 
 ## ⚡️ Advanced / Optional Enhancements
-- [ ] Visible agent behavior: log decision trace (which tools ran, why) per request.
+- [x] Visible agent behavior: log decision trace (which tools ran, why) per request.
 - [ ] Simple planner: decide which helper tools to invoke based on ambiguity count/context.
 - [ ] Iteration loop: if confidence < 0.5, re-run analysis with higher k or adjusted prompt once.
 - [ ] Retry/backoff: add limited retries for embedding/LLM calls on 429/5xx.
