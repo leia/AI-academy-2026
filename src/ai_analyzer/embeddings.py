@@ -22,7 +22,14 @@ def build_embed_fn(config: EmbedConfig) -> Callable[[List[str]], np.ndarray]:
             # batch to reduce round-trips; adjust batch size to ease rate limits
             for start in range(0, len(texts), 64):
                 batch = texts[start : start + 128]
-                response = client.embeddings.create(model=config.model, input=batch)
+                for attempt in range(3):
+                    try:
+                        response = client.embeddings.create(model=config.model, input=batch)
+                        break
+                    except Exception as exc:
+                        if attempt == 2:
+                            raise
+                # end retry
                 vectors.extend([item.embedding for item in response.data])
             return np.array(vectors, dtype="float32")
 
@@ -44,8 +51,14 @@ def build_embed_fn(config: EmbedConfig) -> Callable[[List[str]], np.ndarray]:
         def embed(texts: List[str]) -> np.ndarray:
             vectors: List[List[float]] = []
             for text in texts:
-                resp = client.models.embed_content(model=model_name, contents=[text])
-                vectors.append(resp.embeddings[0].values)
+                for attempt in range(3):
+                    try:
+                        resp = client.models.embed_content(model=model_name, contents=[text])
+                        vectors.append(resp.embeddings[0].values)
+                        break
+                    except Exception:
+                        if attempt == 2:
+                            raise
             return np.array(vectors, dtype="float32")
 
         return embed

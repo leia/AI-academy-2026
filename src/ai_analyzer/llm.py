@@ -16,7 +16,13 @@ def chat(messages: List[Dict[str, str]], config: LLMConfig, max_tokens: int = 80
     """
     if config.provider == "openai":
         client = OpenAI(api_key=config.api_key, base_url=config.base_url)
-        resp = client.chat.completions.create(model=config.model, messages=messages, max_tokens=max_tokens)
+        for attempt in range(3):
+            try:
+                resp = client.chat.completions.create(model=config.model, messages=messages, max_tokens=max_tokens)
+                break
+            except Exception:
+                if attempt == 2:
+                    raise
         return resp.choices[0].message.content
 
     if config.provider == "claude":
@@ -25,12 +31,18 @@ def chat(messages: List[Dict[str, str]], config: LLMConfig, max_tokens: int = 80
         user_parts = [m["content"] for m in messages if m["role"] == "user"]
         system_text = "\n".join(system_parts)
         user_text = "\n\n".join(user_parts)
-        resp = client.messages.create(
-            model=config.model,
-            max_tokens=max_tokens,
-            system=system_text or None,
-            messages=[{"role": "user", "content": user_text}],
-        )
+        for attempt in range(3):
+            try:
+                resp = client.messages.create(
+                    model=config.model,
+                    max_tokens=max_tokens,
+                    system=system_text or None,
+                    messages=[{"role": "user", "content": user_text}],
+                )
+                break
+            except Exception:
+                if attempt == 2:
+                    raise
         return resp.content[0].text
 
     if config.provider == "gemini":
@@ -55,14 +67,20 @@ def chat(messages: List[Dict[str, str]], config: LLMConfig, max_tokens: int = 80
             prompt += "System:\n" + "\n".join(system_parts) + "\n\n"
         prompt += "User:\n" + "\n".join(user_parts)
 
-        resp = client.models.generate_content(
-            model=model_name,
-            contents=prompt,
-            config=genai_types.GenerateContentConfig(
-                max_output_tokens=max_tokens,
-                response_mime_type="application/json",
-            ),
-        )
+        for attempt in range(3):
+            try:
+                resp = client.models.generate_content(
+                    model=model_name,
+                    contents=prompt,
+                    config=genai_types.GenerateContentConfig(
+                        max_output_tokens=max_tokens,
+                        response_mime_type="application/json",
+                    ),
+                )
+                break
+            except Exception:
+                if attempt == 2:
+                    raise
         return resp.text
 
     raise ValueError(f"Unsupported provider: {config.provider}")
