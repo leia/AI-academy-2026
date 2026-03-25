@@ -1,6 +1,6 @@
-# 🚀 Implementation Progress — AI Delivery Risk & Requirement Analyzer
+# 🚀 Implementation Summary — AI Delivery Risk & Requirement Analyzer
 
-Living checklist tracking the build-out of the agentic requirement analyzer. Use this to align scope, surface blockers early, and keep outputs predictable.
+All milestone tasks for the first deliverable are complete. This record summarizes what was built and keeps a concise inventory of completed scope.
 
 Status legend: `[ ]` not started, `[~]` in progress, `[x]` done.
 
@@ -44,3 +44,9 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done.
 - [x] Scaffold project structure (`src/`, `cli.py`, `data/curated/`, `.env.example`, `pyproject.toml`).
 - [x] Choose and pin dependency set (OpenAI, pydantic, python-dotenv, typer/rich, FAISS/Chroma).
 - [x] Draft curated data stubs to unblock ingestion pipeline development.
+
+## ⚡️ Advanced / Optional Enhancements
+- [ ] Visible agent behavior: log decision trace (which tools ran, why) per request.
+- [ ] Simple planner: decide which helper tools to invoke based on ambiguity count/context.
+- [ ] Iteration loop: if confidence < 0.5, re-run analysis with higher k or adjusted prompt once.
+- [ ] Retry/backoff: add limited retries for embedding/LLM calls on 429/5xx.

@@ -2,22 +2,25 @@
 
 ## 📘 Overview
 
-The **AI Delivery Risk & Requirement Analyzer** is an agentic AI system designed to improve the quality and clarity of incoming software requirements in enterprise environments.
+The **AI Delivery Risk & Requirement Analyzer** is a small prototype that explores how AI can help improve the quality and clarity of incoming software requirements.
 
-Ambiguous, incomplete, or inconsistent requirements are a major source of delivery risk, often leading to misalignment, rework, and delayed releases. This project demonstrates how an AI agent can analyze requirement inputs, identify risks, and generate structured clarification outputs to support better decision-making and communication between stakeholders and engineering teams.
+Ambiguous or incomplete requirements are a common source of delivery risk. They often lead to misunderstandings, rework, and delays. This project focuses on analyzing requirement inputs, highlighting potential issues, and generating structured clarification outputs that can be used by engineers or product stakeholders.
 
-The system combines retrieval-augmented generation (RAG), multi-step reasoning, tool-based execution, and self-reflection to produce reliable, context-aware results.
+The system combines retrieval (RAG), structured prompting, and a simple reflection step to produce more consistent and context-aware results.
 
 ---
 
 ## 🎯 Objective
 
-The goal of this project is to design and implement a lightweight agentic AI system that:
+The goal of this project is to build a lightweight system that can:
 
-* Analyzes incoming requirements from multiple sources (tickets, notes, summaries)
-* Detects ambiguity, missing information, and potential risks
-* Generates structured clarification artifacts and follow-up questions
-* Evaluates its own outputs and iteratively improves response quality
+* Analyze incoming requirements (tickets, notes, summaries)
+* Detect ambiguity and missing information
+* Generate useful follow-up questions
+* Provide a rough delivery risk estimate
+* Review its own output and highlight potential issues
+
+The focus is on clarity and practicality rather than completeness.
 
 ---
 
@@ -25,7 +28,7 @@ The goal of this project is to design and implement a lightweight agentic AI sys
 
 ### 1. Requirement Analysis
 
-The agent processes unstructured input and decomposes it into:
+The system processes unstructured input and breaks it down into:
 
 * Feature requests
 * Bug fixes
@@ -34,58 +37,67 @@ The agent processes unstructured input and decomposes it into:
 
 ### 2. Ambiguity Detection
 
-The system identifies vague or under-specified language such as:
+The system looks for vague or underspecified language such as:
 
-* Non-measurable goals (e.g., “improve usability”)
+* Non-measurable goals (e.g. “improve usability”)
 * Missing constraints or acceptance criteria
-* Undefined scope or dependencies
+* Unclear scope or dependencies
 
 ### 3. Context-Aware Reasoning (RAG)
 
-The agent retrieves relevant examples and guidelines from a curated knowledge base, including:
+The system uses a small local knowledge base with examples and guidelines, including:
 
 * Sample requirements
 * Best practice templates
 * Common ambiguity patterns
 
-This context is used to ground the agent’s reasoning and improve output relevance.
+Relevant context is retrieved and included in the prompt so the model has something concrete to work with.
 
-### 4. Tool-Based Agent Workflow
+### 4. Tool-Based Workflow
 
-The system operates as a multi-step agent that orchestrates specialized tools, such as:
+Instead of a single large prompt, the system splits the work into smaller steps (e.g. ambiguity detection, question generation, risk estimation).
 
-* Context retrieval
-* Ambiguity extraction
-* Question generation
-* Risk assessment
+This makes the output easier to control and reason about.
 
 ### 5. Delivery Risk Assessment
 
-The agent evaluates each requirement and assigns a risk score based on:
+The system evaluates each requirement and assigns a rough risk score based on:
 
 * Ambiguity level
 * Missing information
-* Potential implementation uncertainty
+* Implementation uncertainty
 
 ### 6. Self-Reflection & Evaluation
 
-After generating results, the agent performs a self-evaluation step:
+After generating the initial result, the system runs a second pass where the model reviews its own output.
 
-* Reviews completeness and correctness
-* Identifies over-assumptions
-* Assigns a confidence score
-* Optionally refines its output
+It checks for missing information, over-assumptions, and overall completeness, and assigns a simple confidence score.
 
 ---
 
 ## ⚙️ System Workflow
 
-1. **Input Processing** — The user provides a requirement (e.g., ticket, message, or summary).
-2. **Context Retrieval (RAG)** — Relevant examples and guidelines are retrieved from the knowledge base.
-3. **Reasoning & Decomposition** — The agent analyzes the requirement and identifies key components.
-4. **Tool Execution** — The agent invokes specialized tools to detect ambiguities, generate questions, and assess delivery risk.
-5. **Self-Reflection** — The agent evaluates its own output and improves it if necessary.
-6. **Final Output** — The system produces a structured clarification report.
+1. **Input Processing**
+   The user provides a requirement (e.g. ticket, message, or summary).
+
+2. **Context Retrieval (RAG)**
+   Relevant examples and guidelines are retrieved from the knowledge base.
+
+3. **Reasoning & Decomposition**
+   The system analyzes the requirement and identifies key components.
+
+4. **Step Execution**
+   The system runs several steps in sequence to:
+
+   * Detect ambiguities
+   * Generate clarification questions
+   * Assess delivery risk
+
+5. **Self-Reflection**
+   The system reviews its own output and improves it if needed.
+
+6. **Final Output**
+   The system produces a structured clarification report.
 
 ---
 
@@ -98,19 +110,23 @@ After generating results, the agent performs a self-evaluation step:
 **Output:**
 
 * Identified areas:
+
   * UX improvement (undefined scope)
   * Authentication bug (missing error details)
 
 * Detected ambiguities:
+
   * “Improve UX” is not measurable
   * No definition of expected behavior or success criteria
 
 * Suggested clarification questions:
+
   * What specific usability issues should be addressed?
   * Are there existing UX metrics or feedback sources?
   * What is the exact login failure scenario?
 
-* Risk assessment:
+* Risk assessment (rough estimate):
+
   * Ambiguity: High
   * Implementation risk: Medium
   * Confidence: 7/10
@@ -120,34 +136,24 @@ After generating results, the agent performs a self-evaluation step:
 ## 🧰 Technology Stack
 
 * **Language:** Python
-* **LLM providers:** `openai` (default), `claude`, `gemini`
 * **Embeddings:** `openai` or `gemini` (configurable, independent of LLM choice)
-* **Retrieval:** Embeddings + FAISS
-* **Architecture:** Modular agent pipeline with tool orchestration
+* **LLM:** OpenAI API
+* **Retrieval:** lightweight local vector store (FAISS)
+* **Architecture:** modular pipeline with simple step orchestration
 
 ---
 
 ## 📊 Evaluation Approach
 
-The system evaluates its outputs using:
+The system includes a simple evaluation step based on predefined test cases.
 
-* Completeness of clarification
-* Relevance of generated questions
-* Consistency with retrieved context
-* Self-reflection scoring mechanism
+It checks things like:
 
----
+* Whether key ambiguities were detected
+* Whether useful follow-up questions were generated
+* Overall completeness of the output
 
-## 🔗 Configuration
-
-Set in `.env` (see `.env.example`):
-* `LLM_PROVIDER`: `openai` | `claude` | `gemini`
-* `EMBED_PROVIDER`: `openai` | `gemini`
-* OpenAI: `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_EMBED_MODEL`
-* Claude: `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`
-* Gemini: `GOOGLE_API_KEY`, `GEMINI_MODEL` (e.g., `gemini-1.5-pro-latest`), `GEMINI_EMBED_MODEL` (e.g., `models/gemini-embedding-001`)
-
-Providers are independent: choose any generation + embedding combo.
+This is not meant to be a rigorous benchmark, but rather a sanity check for the system’s behavior.
 
 ---
 
@@ -199,8 +205,8 @@ Bands: risk low 0.0–0.2, medium 0.2–0.6, high 0.6–1.0; confidence low 0.0�
 5) Log run to `runs/` unless `--output` is used
 
 ---
+## 🚀 Conclusion
 
-## 📁 Docs
+This project explores how a relatively simple AI pipeline can help surface issues in requirements and support better communication between stakeholders and engineering teams.
 
-* Architecture: [docs/architecture.md](docs/architecture.md)
-* Demo scenario: [docs/demo.md](docs/demo.md)
+The goal is not to replace human judgment, but to provide a structured starting point that reduces ambiguity and highlights potential risks early.
