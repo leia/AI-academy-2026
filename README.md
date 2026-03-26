@@ -162,6 +162,7 @@ This is not meant to be a rigorous benchmark, but rather a sanity check for the 
 * Build index: `ai-analyze ingest data/curated --force`
 * Analyze: `ai-analyze analyze --text "..." --k 5 [--no-reflect] [--debug-raw] [--debug-reflect]`
 * Eval fixtures: `ai-analyze eval tests/fixtures/simple_eval.json`
+* API: `uvicorn api:app --reload --port 8787` (default frontend expects 8787)
 
 Flags:
 * `--k` control top-k context

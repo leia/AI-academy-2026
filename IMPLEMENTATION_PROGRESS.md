@@ -51,3 +51,5 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done.
 - [x] Iteration loop: if confidence < 0.5, re-run analysis once.
 - [x] Retry/backoff: add limited retries for embedding/LLM calls on 429/5xx.
 - [x] API surface: minimal FastAPI endpoint for `/analyze` to demo without CLI.
+- [x] Minimal React frontend to demo `/analyze`.
+- [x] One-command local dev script (backend + frontend).

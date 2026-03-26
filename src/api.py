@@ -42,7 +42,8 @@ def create_app() -> FastAPI:
 
     @lru_cache()
     def shared_index():
-        return load_index(index_dir="data/index")
+        from pathlib import Path
+        return load_index(Path("data/index"))
 
     @lru_cache()
     def shared_embed_fn():
@@ -52,30 +53,32 @@ def create_app() -> FastAPI:
     def analyze(req: AnalyzeRequest):
         try:
             index, docstore = shared_index()
+            embed_fn = shared_embed_fn()
+            llm_config = shared_llm_config()
+
+            query_vec = embed_query(req.text, embed_fn)
+            retrieved = similarity_search(query_vec, index, docstore, top_k=req.k)
+            contexts = [ContextItem(text=r.text, metadata=r.metadata, score=r.score) for r in retrieved]
+
+            trace: list = [{"step": "retrieval", "info": {"k": req.k, "retrieved": len(retrieved)}}] if req.show_trace else []
+            report = run_analysis(
+                req.text,
+                contexts,
+                llm_config,
+                enable_reflection=not req.no_reflect,
+                debug_raw=req.debug_raw,
+                debug_reflect=req.debug_reflect,
+                trace=trace if req.show_trace else None,
+            )
+
+            if req.show_trace:
+                return {"report": report.model_dump(), "trace": trace}
+            return report.model_dump()
+        except HTTPException:
+            raise
         except Exception as exc:
-            raise HTTPException(status_code=500, detail=f"Index not available: {exc}") from exc
-
-        embed_fn = shared_embed_fn()
-        llm_config = shared_llm_config()
-
-        query_vec = embed_query(req.text, embed_fn)
-        retrieved = similarity_search(query_vec, index, docstore, top_k=req.k)
-        contexts = [ContextItem(text=r.text, metadata=r.metadata, score=r.score) for r in retrieved]
-
-        trace: list = [{"step": "retrieval", "info": {"k": req.k, "retrieved": len(retrieved)}}] if req.show_trace else []
-        report = run_analysis(
-            req.text,
-            contexts,
-            llm_config,
-            enable_reflection=not req.no_reflect,
-            debug_raw=req.debug_raw,
-            debug_reflect=req.debug_reflect,
-            trace=trace if req.show_trace else None,
-        )
-
-        if req.show_trace:
-            return {"report": report.model_dump(), "trace": trace}
-        return report.model_dump()
+            # Surface the model/backend error so the frontend can display it
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     return app
 

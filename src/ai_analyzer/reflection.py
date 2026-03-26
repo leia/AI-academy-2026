@@ -17,7 +17,8 @@ def reflect(
 ) -> ClarificationReport:
     user = f"Here is the report to critique:\n\n{report.model_dump_json(indent=2)}"
     messages = [{"role": "system", "content": REFLECTION_SYSTEM}, {"role": "user", "content": user}]
-    raw = chat(messages, llm_config, max_tokens=1500)
+    # Cap reflection tokens but keep it reasonable to avoid excessive cost. 2000 is a practical upper bound here.
+    raw = chat(messages, llm_config, max_tokens=2000)
     if debug_reflect:
         print(f"[DEBUG] reflection raw:\n{raw}\n")
     if trace is not None:

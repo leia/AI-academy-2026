@@ -46,7 +46,8 @@ def detect_ambiguities(text: str) -> List[str]:
                 continue
             findings.append(desc)
 
-    if "acceptance" not in lower and "criteria" not in lower:
+    # Only flag missing acceptance if we don't see metrics/SLA-like signals
+    if "acceptance" not in lower and "criteria" not in lower and not has_metrics(text):
         findings.append("Missing acceptance criteria")
 
     # Non-measurable improvement heuristic

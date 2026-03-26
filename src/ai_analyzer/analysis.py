@@ -57,6 +57,22 @@ def run_analysis(
     if debug_raw:
         print(f"[DEBUG] model raw:\n{raw}\n")
     report = parse_or_fallback(raw, requirement, heuristics, tools, trace=trace)
+    # Heuristic reinforcement: if model omitted ambiguities/questions but heuristics found issues, inject them.
+    if heuristics and (not report.ambiguities or len(report.ambiguities) == 0):
+        trace.append({"step": "heuristic_inject_ambiguities", "info": {"count": len(heuristics)}})
+        report.ambiguities = [Ambiguity(issue=h) for h in heuristics]
+        report.questions = report.questions or []
+        report.questions.extend(generate_questions(heuristics))
+        heuristic_score, heuristic_rationale = score_risk(len(report.ambiguities))
+        if report.risk.score < heuristic_score:
+            report.risk.score = heuristic_score
+            report.risk.rationale = report.risk.rationale or heuristic_rationale
+        # Lower confidence if we had to inject
+        report.confidence = min(report.confidence, 0.6)
+        if report.reflection:
+            report.reflection += " | Heuristic ambiguities/questions injected."
+        else:
+            report.reflection = "Heuristic ambiguities/questions injected because model omitted them."
     if enable_reflection:
         try:
             report = reflect(report, llm_config, debug_reflect=debug_reflect, trace=trace)
@@ -71,6 +87,19 @@ def run_analysis(
         raw2 = chat(messages, llm_config)
         trace.append({"step": "analysis_llm_retry", "info": {"provider": llm_config.provider, "model": llm_config.model}})
         report = parse_or_fallback(raw2, requirement, heuristics, tools, trace=trace)
+    # Post-adjust confidence/risk based on ambiguity count to avoid overconfidence
+    ambiguity_count = len(report.ambiguities or [])
+    if ambiguity_count >= 2:
+        target_conf = max(0.35, 0.7 - 0.06 * (ambiguity_count - 1))
+        if report.confidence > target_conf:
+            trace.append({"step": "confidence_adjust", "info": {"from": report.confidence, "to": target_conf}})
+            report.confidence = target_conf
+        min_risk = min(0.9, 0.35 + 0.1 * ambiguity_count)
+        if report.risk.score < min_risk:
+            trace.append({"step": "risk_adjust", "info": {"from": report.risk.score, "to": min_risk}})
+            report.risk.score = min_risk
+            if not report.risk.rationale:
+                report.risk.rationale = "Raised to reflect unresolved ambiguities."
     return report
 
 
