@@ -8,6 +8,8 @@ Ambiguous or incomplete requirements are a common source of delivery risk. They 
 
 The system combines retrieval (RAG), structured prompting, and a simple reflection step to produce more consistent and context-aware results.
 
+📌 **Quickstart:** see [docs/quickstart.md](docs/quickstart.md) for setup, ingest, CLI/API/UI usage, ports, and troubleshooting.
+
 ---
 
 ## 🎯 Objective
@@ -177,6 +179,11 @@ Flags:
 * Curated corpus: `data/curated/` (with inline metadata headers)
 * Index: `data/index/`
 * Run logs: `runs/`
+
+## 📁 Docs
+* Quickstart: [docs/quickstart.md](docs/quickstart.md)
+* Architecture: [docs/architecture.md](docs/architecture.md)
+* Demo scenario: [docs/demo.md](docs/demo.md)
 
 ---
 
