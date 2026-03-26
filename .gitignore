@@ -11,6 +11,8 @@ dist/
 *.dist-info
 .installed.cfg
 pip-wheel-metadata/
+node_modules/
+frontend/dist/
 
 # Virtual environments
 .venv/
