@@ -1,194 +1,84 @@
 # AI Delivery Risk & Requirement Analyzer
 
-## 📘 Overview
+Lightweight agent that analyzes a requirement, retrieves context, flags ambiguities, generates clarification questions, scores delivery risk, and (optionally) reflects on its own output. Runs via CLI, API, or a small React UI; supports OpenAI, Claude, and Gemini for generation, and OpenAI or Gemini for embeddings.
 
-The **AI Delivery Risk & Requirement Analyzer** is a small prototype that explores how AI can help improve the quality and clarity of incoming software requirements.
-
-Ambiguous or incomplete requirements are a common source of delivery risk. They often lead to misunderstandings, rework, and delays. This project focuses on analyzing requirement inputs, highlighting potential issues, and generating structured clarification outputs that can be used by engineers or product stakeholders.
-
-The system combines retrieval (RAG), structured prompting, and a simple reflection step to produce more consistent and context-aware results.
-
-📌 **Quickstart:** see [docs/quickstart.md](docs/quickstart.md) for setup, ingest, CLI/API/UI usage, ports, and troubleshooting.
+📌 **Quickstart:** start with [docs/quickstart.md](docs/quickstart.md) for setup, ingest, run commands, ports, and troubleshooting.
 
 ---
 
-## 🎯 Objective
-
-The goal of this project is to build a lightweight system that can:
-
-* Analyze incoming requirements (tickets, notes, summaries)
-* Detect ambiguity and missing information
-* Generate useful follow-up questions
-* Provide a rough delivery risk estimate
-* Review its own output and highlight potential issues
-
-The focus is on clarity and practicality rather than completeness.
+## What It Does
+- Retrieval-augmented analysis over a curated corpus (FAISS index)
+- Structured JSON output (summary, ambiguities, questions, risk, confidence, reflection)
+- Optional reflection pass to critique and adjust risk/confidence
+- Decision trace logging for transparency
+- Frontend demo to visualize results and traces
 
 ---
 
-## 🧠 Key Features
-
-### 1. Requirement Analysis
-
-The system processes unstructured input and breaks it down into:
-
-* Feature requests
-* Bug fixes
-* UX improvements
-* Implicit assumptions
-
-### 2. Ambiguity Detection
-
-The system looks for vague or underspecified language such as:
-
-* Non-measurable goals (e.g. “improve usability”)
-* Missing constraints or acceptance criteria
-* Unclear scope or dependencies
-
-### 3. Context-Aware Reasoning (RAG)
-
-The system uses a small local knowledge base with examples and guidelines, including:
-
-* Sample requirements
-* Best practice templates
-* Common ambiguity patterns
-
-Relevant context is retrieved and included in the prompt so the model has something concrete to work with.
-
-### 4. Tool-Based Workflow
-
-Instead of a single large prompt, the system splits the work into smaller steps (e.g. ambiguity detection, question generation, risk estimation).
-
-This makes the output easier to control and reason about.
-
-### 5. Delivery Risk Assessment
-
-The system evaluates each requirement and assigns a rough risk score based on:
-
-* Ambiguity level
-* Missing information
-* Implementation uncertainty
-
-### 6. Self-Reflection & Evaluation
-
-After generating the initial result, the system runs a second pass where the model reviews its own output.
-
-It checks for missing information, over-assumptions, and overall completeness, and assigns a simple confidence score.
+## Core Capabilities
+- **Requirement analysis (RAG):** embed requirement, retrieve top-k context, ground prompts.
+- **Ambiguity & questions:** heuristic patterns + LLM generate ambiguities and follow-ups.
+- **Risk & confidence:** normalized scores (risk 0–1, confidence 0–1) with banding.
+- **Reflection:** second pass critique; retries once if confidence is low; heuristics inject missing ambiguities if the model omits them.
+- **Evaluation:** fixture-based sanity checks with summary hits.
 
 ---
 
-## ⚙️ System Workflow
+## Architecture (condensed)
+1) Ingest curated docs → chunk → embed → FAISS index  
+2) Embed requirement → similarity search → top-k context  
+3) LLM analysis + heuristics → structured JSON  
+4) Optional reflection → adjusted confidence/risk, notes  
+5) Trace + run log persisted (unless `--output`)
 
-1. **Input Processing**
-   The user provides a requirement (e.g. ticket, message, or summary).
-
-2. **Context Retrieval (RAG)**
-   Relevant examples and guidelines are retrieved from the knowledge base.
-
-3. **Reasoning & Decomposition**
-   The system analyzes the requirement and identifies key components.
-
-4. **Step Execution**
-   The system runs several steps in sequence to:
-
-   * Detect ambiguities
-   * Generate clarification questions
-   * Assess delivery risk
-
-5. **Self-Reflection**
-   The system reviews its own output and improves it if needed.
-
-6. **Final Output**
-   The system produces a structured clarification report.
+Diagram: see [docs/architecture.md](docs/architecture.md) (ASCII).
 
 ---
 
-## 📦 Example Output
+## Run It
+### One-command dev (API + UI)
+```powershell
+.\scripts\dev.ps1   # API on 8787, Vite UI on 5173
+```
+Open http://localhost:5173.
 
-**Input:**
+### CLI
+```bash
+ai-analyze ingest data/curated --force
+ai-analyze analyze --text "Improve dashboard UX..." --k 5 [--no-reflect] [--show-trace]
+ai-analyze eval tests/fixtures/simple_eval.json
+```
 
-> “Improve dashboard UX and fix login issue before release.”
+### API
+```bash
+uvicorn api:app --reload --port 8787
+```
+POST `http://localhost:8787/analyze`
+```json
+{ "text": "Improve dashboard UX...", "k": 5, "no_reflect": false, "show_trace": true }
+```
 
-**Output:**
-
-* Identified areas:
-
-  * UX improvement (undefined scope)
-  * Authentication bug (missing error details)
-
-* Detected ambiguities:
-
-  * “Improve UX” is not measurable
-  * No definition of expected behavior or success criteria
-
-* Suggested clarification questions:
-
-  * What specific usability issues should be addressed?
-  * Are there existing UX metrics or feedback sources?
-  * What is the exact login failure scenario?
-
-* Risk assessment (rough estimate):
-
-  * Ambiguity: High
-  * Implementation risk: Medium
-  * Confidence: 7/10
+### Frontend (manual)
+```bash
+cd frontend && npm install && npm run dev   # default expects API at 8787
+```
 
 ---
 
-## 🧰 Technology Stack
+## Configuration
+Set in `.env` (see `.env.example`):
+- `LLM_PROVIDER`: `openai` | `claude` | `gemini`
+- `EMBED_PROVIDER`: `openai` | `gemini`
+- OpenAI: `OPENAI_API_KEY`, `OPENAI_MODEL` (e.g., `gpt-4o-mini`), `OPENAI_EMBED_MODEL` (e.g., `text-embedding-3-small`)
+- Claude: `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`
+- Gemini: `GOOGLE_API_KEY`, `GEMINI_MODEL` (e.g., `gemini-1.5-pro-latest`), `GEMINI_EMBED_MODEL` (e.g., `models/gemini-embedding-001`)
 
-* **Language:** Python
-* **Embeddings:** `openai` or `gemini` (configurable, independent of LLM choice)
-* **LLM:** OpenAI API
-* **Retrieval:** lightweight local vector store (FAISS)
-* **Architecture:** modular pipeline with simple step orchestration
-
----
-
-## 📊 Evaluation Approach
-
-The system includes a simple evaluation step based on predefined test cases.
-
-It checks things like:
-
-* Whether key ambiguities were detected
-* Whether useful follow-up questions were generated
-* Overall completeness of the output
-
-This is not meant to be a rigorous benchmark, but rather a sanity check for the system’s behavior.
+Ports: API 8787, UI 5173.  
+Rebuild index (`ai-analyze ingest ...`) when changing `EMBED_PROVIDER` or embed model.
 
 ---
 
-## ⌨️ CLI Usage
-
-* Build index: `ai-analyze ingest data/curated --force`
-* Analyze: `ai-analyze analyze --text "..." --k 5 [--no-reflect] [--debug-raw] [--debug-reflect]`
-* Eval fixtures: `ai-analyze eval tests/fixtures/simple_eval.json`
-* API: `uvicorn api:app --reload --port 8787` (default frontend expects 8787)
-
-Flags:
-* `--k` control top-k context
-* `--no-reflect` skip reflection pass
-* `--debug-raw` print analysis model output
-* `--debug-reflect` print reflection model output
-
----
-
-## 🗂️ Data Layout
-
-* Curated corpus: `data/curated/` (with inline metadata headers)
-* Index: `data/index/`
-* Run logs: `runs/`
-
-## 📁 Docs
-* Quickstart: [docs/quickstart.md](docs/quickstart.md)
-* Architecture: [docs/architecture.md](docs/architecture.md)
-* Demo scenario: [docs/demo.md](docs/demo.md)
-
----
-
-## 📐 Structured Output Contract
-
+## Output Contract
 ```json
 {
   "summary": {"text": "string"},
@@ -199,22 +89,45 @@ Flags:
   "reflection": "string"
 }
 ```
-
 Bands: risk low 0.0–0.2, medium 0.2–0.6, high 0.6–1.0; confidence low 0.0–0.3, moderate 0.3–0.7, high 0.7–1.0.
 
 ---
 
-## 🧭 Workflow (condensed)
-
-1) Ingest curated docs -> embed -> FAISS index  
-2) Embed requirement -> similarity search -> top-k context  
-3) LLM analysis + heuristics -> structured JSON  
-4) Optional reflection pass -> adjusted confidence/risk, notes  
-5) Log run to `runs/` unless `--output` is used
+## Evaluation
+Run: `ai-analyze eval tests/fixtures/simple_eval.json`  
+Returns per-fixture hits for ambiguities/questions plus a summary.
 
 ---
-## 🚀 Conclusion
 
-This project explores how a relatively simple AI pipeline can help surface issues in requirements and support better communication between stakeholders and engineering teams.
+## Troubleshooting
+- **FAISS dimension error:** re-run `ai-analyze ingest ...` after changing embed provider/model.  
+- **“Failed to fetch” (UI):** ensure API at `VITE_API_URL` (default 8787) is running.  
+- **429/503 or “high demand”:** retries are built in; wait or switch model/provider.  
+- **Missing keys:** check `.env` matches chosen providers.
 
-The goal is not to replace human judgment, but to provide a structured starting point that reduces ambiguity and highlights potential risks early.
+---
+
+## Tech Stack
+Python, FastAPI, Typer, FAISS, Pydantic, Rich, OpenAI/Anthropic/Gemini clients, React + Vite (frontend).
+
+---
+
+## Project Structure
+```
+src/
+  main.py          # CLI entry
+  api.py           # FastAPI app (/analyze)
+  ai_analyzer/     # analysis pipeline, config, tools, prompts, reflection, eval
+frontend/          # React UI (Vite)
+data/curated/      # curated corpus
+data/index/        # FAISS index (generated)
+runs/              # run logs
+docs/              # architecture, demo, quickstart
+tests/             # fixtures and smoke placeholder
+scripts/dev.ps1    # start API + frontend
+```
+
+---
+
+## License
+Educational project for AI Academy Capstone.

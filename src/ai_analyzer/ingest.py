@@ -7,6 +7,7 @@ from typing import Callable, List, Tuple
 
 import faiss
 import numpy as np
+import pdfplumber
 
 @dataclass
 class DocumentChunk:
@@ -41,9 +42,14 @@ def ingest_corpus_with_embed(
 def load_documents(data_dir: Path) -> List[DocumentChunk]:
     docs: List[DocumentChunk] = []
     for path in sorted(data_dir.glob("**/*")):
-        if path.is_dir() or path.suffix.lower() not in {".md", ".txt"}:
+        if path.is_dir() or path.suffix.lower() not in {".md", ".txt", ".pdf"}:
             continue
-        text = path.read_text(encoding="utf-8")
+        if path.suffix.lower() == ".pdf":
+            text = extract_pdf_text(path)
+        else:
+            text = path.read_text(encoding="utf-8")
+        if not text.strip():
+            continue
         meta = {
             "source": path.name,
             "path": str(path),
@@ -102,3 +108,16 @@ def infer_type_from_name(name: str) -> str:
     if "example" in lowered:
         return "example"
     return "unknown"
+
+
+def extract_pdf_text(path: Path) -> str:
+    parts: List[str] = []
+    try:
+        with pdfplumber.open(path) as pdf:
+            for page in pdf.pages:
+                txt = page.extract_text() or ""
+                if txt.strip():
+                    parts.append(txt)
+    except Exception:
+        return ""
+    return "\n".join(parts)

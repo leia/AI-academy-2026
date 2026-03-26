@@ -53,3 +53,4 @@ Status legend: `[ ]` not started, `[~]` in progress, `[x]` done.
 - [x] API surface: minimal FastAPI endpoint for `/analyze` to demo without CLI.
 - [x] Minimal React frontend to demo `/analyze`.
 - [x] One-command local dev script (backend + frontend).
+- [ ] Q&A endpoint/CLI: answer arbitrary questions over indexed corpus (retrieve top-k, concise answer).
