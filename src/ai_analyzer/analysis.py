@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Dict, Any
@@ -14,7 +15,11 @@ from ai_analyzer.schemas import (
     RiskAssessment,
 )
 from ai_analyzer.reflection import reflect
-from ai_analyzer.tools import detect_ambiguities, generate_questions, score_risk, decide_tools
+from ai_analyzer.tools import (
+    detect_ambiguities,
+    score_risk,
+    decide_tools, generate_questions
+)
 from ai_analyzer.prompts import ANALYSIS_SYSTEM, ANALYSIS_USER_TEMPLATE
 
 
@@ -35,6 +40,25 @@ def build_prompt(requirement: str, contexts: List[ContextItem], heuristics: List
         requirement=requirement, k=len(contexts), context_block=context_block, heuristics_block=heuristics_block
     )
     return [{"role": "system", "content": ANALYSIS_SYSTEM}, {"role": "user", "content": user}]
+
+
+STOPWORDS = {
+    "the", "a", "an", "of", "and", "or", "to", "for", "in", "on", "at", "by", "with",
+    "is", "are", "be", "been", "was", "were", "this", "that", "these", "those",
+    "what", "which", "who", "whom", "whose", "how", "do", "does", "did", "it",
+    "its", "their", "them", "our", "we", "you", "your", "yours"
+}
+
+
+def question_answered(question: str, requirement_text: str, context_text: str) -> bool:
+    """Heuristic: if most content words from the question appear in requirement+context, treat as answered."""
+    tokens = re.findall(r"[a-z0-9]+", question.lower())
+    content = [t for t in tokens if t not in STOPWORDS and len(t) > 2]
+    if not content:
+        return False
+    haystack = f"{requirement_text} {context_text}"
+    hits = sum(1 for t in content if t in haystack)
+    return hits / len(content) >= 0.6
 
 
 def run_analysis(
@@ -62,7 +86,6 @@ def run_analysis(
         trace.append({"step": "heuristic_inject_ambiguities", "info": {"count": len(heuristics)}})
         report.ambiguities = [Ambiguity(issue=h) for h in heuristics]
         report.questions = report.questions or []
-        report.questions.extend(generate_questions(heuristics))
         heuristic_score, heuristic_rationale = score_risk(len(report.ambiguities))
         if report.risk.score < heuristic_score:
             report.risk.score = heuristic_score

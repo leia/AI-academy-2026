@@ -95,20 +95,31 @@ def create_app() -> FastAPI:
             llm_config = shared_llm_config()
 
             query_vec = embed_query(req.question, embed_fn)
-            retrieved = similarity_search(query_vec, index, docstore, top_k=req.k)
+            search_k = max(req.k * 3, req.k + 5)
+            retrieved = similarity_search(query_vec, index, docstore, top_k=search_k)
             contexts = [{"text": r.text, "metadata": r.metadata, "score": r.score} for r in retrieved]
-            filtered = [
+            qa_only = [
                 c
                 for c in contexts
                 if c["metadata"].get("collection") == "qa"
-                or c["metadata"].get("type") in {"requirement", "unknown", "example"}
+                or "/qa/" in c["metadata"].get("path", "").replace("\\", "/")
             ]
-            if filtered:
-                contexts = filtered[: req.k]
+            if qa_only:
+                contexts = qa_only
+            seen = set()
+            dedup = []
+            for c in contexts:
+                key = (c["metadata"].get("path"), c["metadata"].get("chunk_start_word"))
+                if key in seen:
+                    continue
+                seen.add(key)
+                dedup.append(c)
+            contexts = dedup[: req.k]
+            filenames = sorted({c["metadata"].get("source") for c in contexts})
             trace = [{"step": "retrieval", "info": {"k": req.k, "retrieved": len(retrieved)}}] if req.show_trace else None
 
             answer = answer_question(req.question, contexts, llm_config)
-            payload = {"question": req.question, "answer": answer, "retrieved": contexts}
+            payload = {"question": req.question, "answer": answer, "retrieved": filenames}
             if trace:
                 payload["trace"] = trace
             return payload

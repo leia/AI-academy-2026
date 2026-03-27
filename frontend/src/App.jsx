@@ -306,12 +306,18 @@ export default function App() {
               <details>
                 <summary>Retrieved context</summary>
                 <ul className="list-tight">
-                  {(qaAnswer.retrieved ?? []).map((c, i) => (
-                    <li key={i}>
-                      <strong>{c.metadata?.source}</strong>: {c.text.slice(0, 300)}
-                      {c.text.length > 300 && '...'}
-                    </li>
-                  ))}
+                  {(qaAnswer.retrieved ?? []).map((c, i) => {
+                    if (typeof c === 'string') {
+                      return <li key={i}>{c}</li>
+                    }
+                    const txt = c.text || ''
+                    return (
+                      <li key={i}>
+                        <strong>{c.metadata?.source}</strong>: {txt.slice(0, 300)}
+                        {txt.length > 300 && '...'}
+                      </li>
+                    )
+                  })}
                 </ul>
               </details>
             </div>

@@ -35,6 +35,24 @@ def has_metrics(text: str) -> bool:
     return bool(METRIC_PATTERN.search(text))
 
 
+def has_event_structure(text: str) -> bool:
+    lower = text.lower()
+    keywords = ["event", "timestamp", "severity", "affected entity", "event id"]
+    return ("event" in lower and "timestamp" in lower and "severity" in lower) or sum(
+        k in lower for k in keywords
+    ) >= 3
+
+
+def has_retry_policy(text: str) -> bool:
+    lower = text.lower()
+    if "retry" not in lower:
+        return False
+    has_interval = any(tok in lower for tok in ["second", "sec", "minute", "min", "backoff"])
+    has_count = bool(re.search(r"\b\d+\s*(x|times|retries|retry)\b", lower)) or "retry up to" in lower
+    has_fallback = any(tok in lower for tok in ["fallback", "email", "sms", "alternate", "channel"])
+    return (has_interval and has_count) or (has_count and has_fallback)
+
+
 def detect_ambiguities(text: str) -> List[str]:
     findings = []
     lower = text.lower()
@@ -53,6 +71,12 @@ def detect_ambiguities(text: str) -> List[str]:
     # Non-measurable improvement heuristic
     if any(word in lower for word in ["improve", "better", "faster"]) and not has_metrics(text):
         findings.append("Non-measurable goal (no metrics provided)")
+
+    # Ops events & retries: only flag if missing
+    if not has_event_structure(text):
+        findings.append("Operational event structure undefined")
+    if not has_retry_policy(text):
+        findings.append("Notification retry policy unspecified")
     return findings
 
 
@@ -70,7 +94,27 @@ def generate_questions(ambiguities: List[str]) -> List[str]:
     questions = []
     for amb in ambiguities:
         questions.append(f"Can you clarify: {amb}?")
-    if not ambiguities:
+    return questions
+
+
+def generate_questions_with_filter(ambiguities: List[str], requirement_text: str) -> List[str]:
+    """
+    Generate questions but drop ones that are already answered in the requirement/context.
+    """
+    lower = requirement_text.lower()
+
+    def answered(amb: str) -> bool:
+        if "event structure" in amb.lower():
+            return has_event_structure(requirement_text)
+        if "retry policy" in amb.lower():
+            return has_retry_policy(requirement_text)
+        return False
+
+    filtered = [amb for amb in ambiguities if not answered(amb)]
+    questions = generate_questions(filtered)
+
+    has_acceptance = "acceptance" in lower or "criteria" in lower or has_metrics(requirement_text)
+    if not filtered and not has_acceptance:
         questions.append("What are the success metrics and acceptance criteria?")
     return questions
 

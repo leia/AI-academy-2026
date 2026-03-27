@@ -193,18 +193,31 @@ def qa(
         raise typer.Exit(code=1)
 
     query_vec = embed_query(question, embed_fn)
-    retrieved = similarity_search(query_vec, index, docstore, top_k=k)
+    search_k = max(k * 3, k + 5)
+    retrieved = similarity_search(query_vec, index, docstore, top_k=search_k)
     contexts = [{"text": r.text, "metadata": r.metadata} for r in retrieved]
-    filtered = [
-        c for c in contexts
+    qa_only = [
+        c
+        for c in contexts
         if c["metadata"].get("collection") == "qa"
-        or c["metadata"].get("type") in {"requirement", "unknown", "example"}
+        or "/qa/" in c["metadata"].get("path", "").replace("\\", "/")
     ]
-    if filtered:
-        contexts = filtered[:k]
+    if qa_only:
+        contexts = qa_only
+    # deduplicate by path + chunk_start_word
+    seen = set()
+    dedup = []
+    for c in contexts:
+        key = (c["metadata"].get("path"), c["metadata"].get("chunk_start_word"))
+        if key in seen:
+            continue
+        seen.add(key)
+        dedup.append(c)
+    contexts = dedup[:k]
     answer = answer_question(question, contexts, llm_config)
 
-    payload = {"question": question, "answer": answer, "retrieved": contexts}
+    filenames = sorted({c["metadata"].get("source") for c in contexts})
+    payload = {"question": question, "answer": answer, "retrieved": filenames}
     print(json.dumps(payload, indent=2))
 
 
