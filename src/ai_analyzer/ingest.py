@@ -8,6 +8,7 @@ from typing import Callable, List, Tuple
 import faiss
 import numpy as np
 import pdfplumber
+from numpy.linalg import norm
 
 @dataclass
 class DocumentChunk:
@@ -83,12 +84,16 @@ def embed_chunks(chunks: List[DocumentChunk], embed_fn: Callable[[List[str]], np
     except Exception as exc:
         # Wrap provider-specific errors with context so the CLI can surface them cleanly
         raise ValueError(f"Embedding failed: {exc}") from exc
-    return np.array(vectors, dtype="float32")
+    arr = np.array(vectors, dtype="float32")
+    # Normalize for cosine/IP similarity
+    norms = norm(arr, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    return arr / norms
 
 
 def persist_index(chunks: List[DocumentChunk], vectors: np.ndarray, index_dir: Path) -> None:
     index_dir.mkdir(parents=True, exist_ok=True)
-    index = faiss.IndexFlatL2(vectors.shape[1])
+    index = faiss.IndexFlatIP(vectors.shape[1])
     index.add(vectors)
     faiss.write_index(index, str(index_dir / "index.faiss"))
 

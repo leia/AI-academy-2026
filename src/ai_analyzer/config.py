@@ -3,6 +3,9 @@ from dataclasses import dataclass
 
 from dotenv import load_dotenv
 
+# Load environment once at import time to avoid repeated I/O
+load_dotenv()
+
 
 @dataclass
 class LLMConfig:
@@ -26,8 +29,6 @@ def load_llm_config() -> LLMConfig:
     Load LLM configuration with support for OpenAI, Claude (Anthropic), and Gemini.
     Defaults to OpenAI if no provider is specified.
     """
-
-    load_dotenv()
     provider = os.getenv("LLM_PROVIDER", "openai").lower()
 
     if provider == "openai":
@@ -56,7 +57,6 @@ def load_embed_config() -> EmbedConfig:
     Load embedding configuration. Default is OpenAI embeddings.
     Supports: openai, gemini.
     """
-    load_dotenv()
     provider = os.getenv("EMBED_PROVIDER", "openai").lower()
 
     if provider == "openai":

@@ -7,6 +7,7 @@ from typing import List
 
 import faiss
 import numpy as np
+from numpy.linalg import norm
 
 
 @dataclass
@@ -27,6 +28,15 @@ def load_index(index_dir: Path):
 
 
 def similarity_search(query_embedding: np.ndarray, index, docstore, top_k: int = 5) -> List[RetrievedChunk]:
+    # Guard: dimension mismatch (e.g., index built with a different embed model)
+    if query_embedding.shape[1] != index.d:
+        raise ValueError(
+            f"Index dimension ({index.d}) does not match query embedding ({query_embedding.shape[1]}). "
+            "Re-run ingestion with the current embed model/provider."
+        )
+    # Normalize for cosine/IP retrieval if index expects it
+    if not np.allclose(norm(query_embedding), 0):
+        query_embedding = query_embedding / norm(query_embedding, axis=1, keepdims=True)
     scores, ids = index.search(query_embedding, top_k)
     results: List[RetrievedChunk] = []
     for score, idx in zip(scores[0], ids[0]):

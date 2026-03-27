@@ -194,10 +194,11 @@ Open http://localhost:5173.
 ---
 
 ### 🗂 Data & Index
-- Place sources in `data/curated/`.  
-- Optional: put QA‑only sources in `data/curated/qa/` — QA will prefer these but still fall back to requirement‑type chunks elsewhere.  
-- Rebuild index after adding/moving files or changing embed provider/model: `ai-analyze ingest data/curated --force`.  
-- Generated index lives in `data/index/` (FAISS + docstore JSON).
+- Place sources in data/curated/ (txt/md/pdf). Optional QA-only docs go in data/curated/qa/ (QA prefers these; analyze uses all).
+- Ingestion normalizes embeddings and builds a FAISS inner-product index (cosine-style). Rebuild anytime you add/move files or change embed provider/model: ai-analyze
+  ingest data/curated --force.
+- Index artifacts live in data/index/ (index.faiss + docstore.json).
+- Practical k: defaults to 5; you can raise it as needed (hard cap currently 20 in UI/CLI; adjust if you raise it).
 
 ---
 

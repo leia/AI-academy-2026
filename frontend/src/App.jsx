@@ -206,7 +206,6 @@ export default function App() {
               </div>
               <p className="summary">{report.summary?.text}</p>
 
-              <h3>Ambiguities</h3>
               <div className="heading-inline">
                 <h3>Ambiguities</h3>
                 <span className="info" title="Detected vague or missing details with optional severity/impact.">ℹ</span>

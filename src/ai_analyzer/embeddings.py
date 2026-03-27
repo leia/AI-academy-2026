@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 from typing import Callable, List
+import time
 
 import numpy as np
 from openai import OpenAI
 
 from ai_analyzer.config import EmbedConfig
+from ai_analyzer.retry_utils import with_retries, backoff_delay
+
+
+def _backoff_delay(attempt: int, base: float = 0.5, factor: float = 2.0, jitter: float = 0.2) -> float:
+    return base * (factor ** attempt) * (1 + random.uniform(-jitter, jitter))
 
 
 def build_embed_fn(config: EmbedConfig) -> Callable[[List[str]], np.ndarray]:
@@ -19,17 +25,10 @@ def build_embed_fn(config: EmbedConfig) -> Callable[[List[str]], np.ndarray]:
 
         def embed(texts: List[str]) -> np.ndarray:
             vectors: List[List[float]] = []
-            # batch to reduce round-trips; adjust batch size to ease rate limits
-            for start in range(0, len(texts), 64):
-                batch = texts[start : start + 128]
-                for attempt in range(3):
-                    try:
-                        response = client.embeddings.create(model=config.model, input=batch)
-                        break
-                    except Exception as exc:
-                        if attempt == 2:
-                            raise
-                # end retry
+            batch_size = 64
+            for start in range(0, len(texts), batch_size):
+                batch = texts[start : start + batch_size]
+                response = with_retries(lambda: client.embeddings.create(model=config.model, input=batch))
                 vectors.extend([item.embedding for item in response.data])
             return np.array(vectors, dtype="float32")
 
@@ -51,14 +50,8 @@ def build_embed_fn(config: EmbedConfig) -> Callable[[List[str]], np.ndarray]:
         def embed(texts: List[str]) -> np.ndarray:
             vectors: List[List[float]] = []
             for text in texts:
-                for attempt in range(3):
-                    try:
-                        resp = client.models.embed_content(model=model_name, contents=[text])
-                        vectors.append(resp.embeddings[0].values)
-                        break
-                    except Exception:
-                        if attempt == 2:
-                            raise
+                resp = with_retries(lambda: client.models.embed_content(model=model_name, contents=[text]))
+                vectors.append(resp.embeddings[0].values)
             return np.array(vectors, dtype="float32")
 
         return embed
