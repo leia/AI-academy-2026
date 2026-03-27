@@ -19,6 +19,10 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState(null)
+  const [qaQuestion, setQaQuestion] = useState('')
+  const [qaAnswer, setQaAnswer] = useState(null)
+  const [qaLoading, setQaLoading] = useState(false)
+  const [qaError, setQaError] = useState('')
 
   const onSubmit = async (e) => {
     e.preventDefault()
@@ -66,6 +70,41 @@ export default function App() {
 
   const report = result?.report ?? result
   const trace = result?.trace
+
+  const runQa = async (e) => {
+    e.preventDefault()
+    setQaLoading(true)
+    setQaError('')
+    setQaAnswer(null)
+    try {
+      const resp = await fetch(`${API_URL}/qa`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: qaQuestion, k: Number(k) || 5 }),
+      })
+      if (!resp.ok) {
+        const text = await resp.text()
+        let msg = text || resp.statusText
+        try {
+          const errJson = JSON.parse(text)
+          msg =
+            errJson.detail ||
+            errJson.message ||
+            errJson.error?.message ||
+            errJson.error?.status ||
+            JSON.stringify(errJson)
+        } catch {}
+        throw new Error(msg || resp.statusText)
+      }
+      const data = await resp.json()
+      setQaAnswer(data)
+    } catch (err) {
+      setQaError(err?.message || 'Request failed')
+      console.error('QA error:', err)
+    } finally {
+      setQaLoading(false)
+    }
+  }
 
   return (
     <div className="page">
@@ -224,6 +263,58 @@ export default function App() {
                 </details>
               )}
             </>
+          )}
+        </section>
+
+        <section className="card">
+          <h2>Ask the Indexed Docs</h2>
+          <form onSubmit={runQa} className="form">
+            <label>
+              <span className="label-row">
+                <span>Question</span>
+                <span className="info" title="Ask a question over the indexed corpus.">ℹ</span>
+              </span>
+              <textarea value={qaQuestion} onChange={(e) => setQaQuestion(e.target.value)} rows={3} />
+            </label>
+            <div className="row row-wrap">
+              <label>
+                <span className="label-row">
+                  <span>Top-k</span>
+                  <span className="info" title="How many retrieved chunks to use.">ℹ</span>
+                </span>
+                <input type="number" min="1" max="20" value={k} onChange={(e) => setK(e.target.value)} />
+              </label>
+            </div>
+            <button type="submit" disabled={qaLoading || !qaQuestion.trim()} className={qaLoading ? 'loading' : ''}>
+              {qaLoading ? (
+                <span className="spinner">
+                  <span className="dot" />
+                  <span className="dot" />
+                  <span className="dot" />
+                </span>
+              ) : (
+                'Ask'
+              )}
+            </button>
+            {qaError && <p className="error">Error: {qaError}</p>}
+          </form>
+
+          {qaAnswer && (
+            <div className="qa-block">
+              <h3>Answer</h3>
+              <p>{qaAnswer.answer || qaAnswer}</p>
+              <details>
+                <summary>Retrieved context</summary>
+                <ul className="list-tight">
+                  {(qaAnswer.retrieved ?? []).map((c, i) => (
+                    <li key={i}>
+                      <strong>{c.metadata?.source}</strong>: {c.text.slice(0, 300)}
+                      {c.text.length > 300 && '...'}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            </div>
           )}
         </section>
       </main>

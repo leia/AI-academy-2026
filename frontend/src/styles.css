@@ -229,6 +229,12 @@ button:disabled {
   100% { transform: scale(0.7); opacity: 0.6; }
 }
 
+.qa-block {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e5e7eb;
+}
+
 .summary {
   font-size: 17px;
   font-weight: 650;
