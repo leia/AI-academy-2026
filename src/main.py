@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 from typing import Optional
 
@@ -9,7 +10,9 @@ from ai_analyzer.config import load_embed_config, load_llm_config
 from ai_analyzer.embeddings import build_embed_fn
 from ai_analyzer.ingest import ingest_corpus_with_embed
 from ai_analyzer.logging_utils import save_run
+from ai_analyzer.qa import answer_question
 from ai_analyzer.retrieval import embed_query, load_index, similarity_search
+from ai_analyzer.eval import run_eval
 
 app = typer.Typer(help="AI Delivery Risk & Requirement Analyzer (console edition).")
 
@@ -154,6 +157,31 @@ def eval(
         print(f"[red]Configuration error:[/red] {exc}")
         raise typer.Exit(code=1)
     print(json.dumps(results, indent=2))
+
+
+@app.command()
+def qa(
+    question: str = typer.Argument(..., help="Question to ask over the indexed corpus."),
+    k: int = typer.Option(5, "--k", help="Top-k retrieved chunks to use."),
+    index_dir: Path = typer.Option(Path("data/index"), "--index-dir", "-i", dir_okay=True, readable=True),
+):
+    """Answer a question using retrieved context from the indexed corpus."""
+    try:
+        llm_config = load_llm_config()
+        embed_config = load_embed_config()
+        embed_fn = build_embed_fn(embed_config)
+        index, docstore = load_index(index_dir)
+    except Exception as exc:
+        print(f"[red]Configuration or index error:[/red] {exc}")
+        raise typer.Exit(code=1)
+
+    query_vec = embed_query(question, embed_fn)
+    retrieved = similarity_search(query_vec, index, docstore, top_k=k)
+    contexts = [{"text": r.text, "metadata": r.metadata} for r in retrieved]
+    answer = answer_question(question, contexts, llm_config)
+
+    payload = {"question": question, "answer": answer, "retrieved": contexts}
+    print(json.dumps(payload, indent=2))
 
 
 if __name__ == "__main__":

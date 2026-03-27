@@ -47,6 +47,7 @@ Open http://localhost:5173.
 ai-analyze ingest data/curated --force
 ai-analyze analyze --text "Improve dashboard UX..." --k 5 [--no-reflect] [--show-trace]
 ai-analyze eval tests/fixtures/simple_eval.json
+ai-analyze qa --question "What is the deadline?" --k 5
 ```
 
 ### API
@@ -56,6 +57,10 @@ uvicorn api:app --reload --port 8787
 POST `http://localhost:8787/analyze`
 ```json
 { "text": "Improve dashboard UX...", "k": 5, "no_reflect": false, "show_trace": true }
+```
+POST `http://localhost:8787/qa`
+```json
+{ "question": "What is the deadline?", "k": 5 }
 ```
 
 ### Frontend (manual)
@@ -104,6 +109,7 @@ Returns per-fixture hits for ambiguities/questions plus a summary.
 - **“Failed to fetch” (UI):** ensure API at `VITE_API_URL` (default 8787) is running.  
 - **429/503 or “high demand”:** retries are built in; wait or switch model/provider.  
 - **Missing keys:** check `.env` matches chosen providers.
+- **QA empty/irrelevant answers:** verify index exists and includes PDFs; rerun ingest if you added/changed sources.
 
 ---
 
