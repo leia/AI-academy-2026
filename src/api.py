@@ -96,10 +96,15 @@ def create_app() -> FastAPI:
 
             query_vec = embed_query(req.question, embed_fn)
             retrieved = similarity_search(query_vec, index, docstore, top_k=req.k)
-            contexts = [
-                {"text": r.text, "metadata": r.metadata, "score": r.score}
-                for r in retrieved
+            contexts = [{"text": r.text, "metadata": r.metadata, "score": r.score} for r in retrieved]
+            filtered = [
+                c
+                for c in contexts
+                if c["metadata"].get("collection") == "qa"
+                or c["metadata"].get("type") in {"requirement", "unknown", "example"}
             ]
+            if filtered:
+                contexts = filtered[: req.k]
             trace = [{"step": "retrieval", "info": {"k": req.k, "retrieved": len(retrieved)}}] if req.show_trace else None
 
             answer = answer_question(req.question, contexts, llm_config)

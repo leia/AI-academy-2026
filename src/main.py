@@ -195,6 +195,13 @@ def qa(
     query_vec = embed_query(question, embed_fn)
     retrieved = similarity_search(query_vec, index, docstore, top_k=k)
     contexts = [{"text": r.text, "metadata": r.metadata} for r in retrieved]
+    filtered = [
+        c for c in contexts
+        if c["metadata"].get("collection") == "qa"
+        or c["metadata"].get("type") in {"requirement", "unknown", "example"}
+    ]
+    if filtered:
+        contexts = filtered[:k]
     answer = answer_question(question, contexts, llm_config)
 
     payload = {"question": question, "answer": answer, "retrieved": contexts}

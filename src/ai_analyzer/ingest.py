@@ -53,6 +53,7 @@ def load_documents(data_dir: Path) -> List[DocumentChunk]:
         meta = {
             "source": path.name,
             "path": str(path),
+            "collection": path.relative_to(data_dir).parts[0] if len(path.relative_to(data_dir).parts) > 1 else "default",
             "type": infer_type_from_name(path.name),
         }
         docs.append(DocumentChunk(text=text, metadata=meta))
@@ -99,7 +100,7 @@ def persist_index(chunks: List[DocumentChunk], vectors: np.ndarray, index_dir: P
 
 def infer_type_from_name(name: str) -> str:
     lowered = name.lower()
-    if "requirement" in lowered:
+    if any(key in lowered for key in ["requirement", "req", "srs", "prd", "spec"]):
         return "requirement"
     if "guideline" in lowered:
         return "guideline"
