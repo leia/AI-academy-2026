@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 from ai_analyzer.analysis import ContextItem, run_analysis
 from ai_analyzer.config import load_embed_config, load_llm_config
 from ai_analyzer.embeddings import build_embed_fn
+from ai_analyzer.qa import answer_question
 from ai_analyzer.retrieval import embed_query, load_index, similarity_search
 
 
@@ -20,6 +21,12 @@ class AnalyzeRequest(BaseModel):
     show_trace: bool = False
     debug_raw: bool = False
     debug_reflect: bool = False
+
+
+class QARequest(BaseModel):
+    question: str = Field(..., description="Question to ask the indexed corpus")
+    k: int = Field(5, ge=1, le=20)
+    show_trace: bool = False
 
 
 def create_app() -> FastAPI:
@@ -78,6 +85,31 @@ def create_app() -> FastAPI:
             raise
         except Exception as exc:
             # Surface the model/backend error so the frontend can display it
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
+
+    @app.post("/qa")
+    def qa(req: QARequest):
+        try:
+            index, docstore = shared_index()
+            embed_fn = shared_embed_fn()
+            llm_config = shared_llm_config()
+
+            query_vec = embed_query(req.question, embed_fn)
+            retrieved = similarity_search(query_vec, index, docstore, top_k=req.k)
+            contexts = [
+                {"text": r.text, "metadata": r.metadata, "score": r.score}
+                for r in retrieved
+            ]
+            trace = [{"step": "retrieval", "info": {"k": req.k, "retrieved": len(retrieved)}}] if req.show_trace else None
+
+            answer = answer_question(req.question, contexts, llm_config)
+            payload = {"question": req.question, "answer": answer, "retrieved": contexts}
+            if trace:
+                payload["trace"] = trace
+            return payload
+        except HTTPException:
+            raise
+        except Exception as exc:
             raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     return app
