@@ -13,6 +13,7 @@ from ai_analyzer.logging_utils import save_run
 from ai_analyzer.qa import answer_question
 from ai_analyzer.retrieval import embed_query, load_index, similarity_search
 from ai_analyzer.eval import run_eval
+from ai_analyzer.doclist import list_documents
 
 app = typer.Typer(help="AI Delivery Risk & Requirement Analyzer (console edition).")
 
@@ -157,6 +158,22 @@ def eval(
         print(f"[red]Configuration error:[/red] {exc}")
         raise typer.Exit(code=1)
     print(json.dumps(results, indent=2))
+
+
+@app.command()
+def list_docs(
+    index_dir: Path = typer.Option(Path("data/index"), "--index-dir", "-i", dir_okay=True, readable=True),
+):
+    """List documents present in the current index (source, path, type)."""
+    try:
+        docs = list_documents(index_dir)
+    except FileNotFoundError:
+        print(
+            "[red]Index not found.[/red] Run "
+            f"[cyan]ai-analyze ingest {index_dir}[/cyan] first (or specify --index-dir)."
+        )
+        raise typer.Exit(code=1)
+    print(json.dumps(docs, indent=2))
 
 
 @app.command()

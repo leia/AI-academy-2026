@@ -48,6 +48,7 @@ ai-analyze ingest data/curated --force
 ai-analyze analyze --text "Improve dashboard UX..." --k 5 [--no-reflect] [--show-trace]
 ai-analyze eval tests/fixtures/simple_eval.json
 ai-analyze qa --question "What is the deadline?" --k 5
+ai-analyze list-docs
 ```
 
 ### API
