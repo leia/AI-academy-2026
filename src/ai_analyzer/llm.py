@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict, List, Optional
+import time
+import random
 
 from anthropic import Anthropic
 from openai import OpenAI
@@ -8,7 +10,11 @@ from openai import OpenAI
 from ai_analyzer.config import LLMConfig
 
 
-def chat(messages: List[Dict[str, str]], config: LLMConfig, max_tokens: int = 800) -> str:
+def _backoff_delay(attempt: int, base: float = 0.5, factor: float = 2.0, jitter: float = 0.2) -> float:
+    return base * (factor ** attempt) * (1 + random.uniform(-jitter, jitter))
+
+
+def chat(messages: List[Dict[str, str]], config: LLMConfig, max_tokens: int = 800, mime: Optional[str] = None) -> str:
     """
     Minimal abstraction over provider-specific chat APIs.
     Accepts OpenAI-style message dicts: [{role: system|user, content: "..."}].
@@ -18,11 +24,14 @@ def chat(messages: List[Dict[str, str]], config: LLMConfig, max_tokens: int = 80
         client = OpenAI(api_key=config.api_key, base_url=config.base_url)
         for attempt in range(3):
             try:
-                resp = client.chat.completions.create(model=config.model, messages=messages, max_tokens=max_tokens)
+                resp = client.chat.completions.create(
+                    model=config.model, messages=messages, max_tokens=max_tokens, temperature=0
+                )
                 break
             except Exception:
                 if attempt == 2:
                     raise
+                time.sleep(_backoff_delay(attempt))
         return resp.choices[0].message.content
 
     if config.provider == "claude":
@@ -38,11 +47,13 @@ def chat(messages: List[Dict[str, str]], config: LLMConfig, max_tokens: int = 80
                     max_tokens=max_tokens,
                     system=system_text or None,
                     messages=[{"role": "user", "content": user_text}],
+                    temperature=0,
                 )
                 break
             except Exception:
                 if attempt == 2:
                     raise
+                time.sleep(_backoff_delay(attempt))
         return resp.content[0].text
 
     if config.provider == "gemini":
@@ -74,13 +85,15 @@ def chat(messages: List[Dict[str, str]], config: LLMConfig, max_tokens: int = 80
                     contents=prompt,
                     config=genai_types.GenerateContentConfig(
                         max_output_tokens=max_tokens,
-                        response_mime_type="application/json",
+                        response_mime_type=mime or "text/plain",
+                        temperature=0,
                     ),
                 )
                 break
             except Exception:
                 if attempt == 2:
                     raise
+                time.sleep(_backoff_delay(attempt))
         return resp.text
 
     raise ValueError(f"Unsupported provider: {config.provider}")

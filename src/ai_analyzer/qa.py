@@ -18,4 +18,4 @@ def build_qa_prompt(question: str, contexts: List[Dict]) -> list:
 
 def answer_question(question: str, contexts: List[Dict], llm_config: LLMConfig) -> str:
     messages = build_qa_prompt(question, contexts)
-    return chat(messages, llm_config, max_tokens=256)
+    return chat(messages, llm_config, max_tokens=256, mime="text/plain")

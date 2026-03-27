@@ -76,7 +76,7 @@ def run_analysis(
     tools = decide_tools(heuristics)
     trace.append({"step": "planner", "info": {"tools": tools}})
     messages = build_prompt(requirement, contexts, heuristics)
-    raw = chat(messages, llm_config)
+    raw = chat(messages, llm_config, mime="application/json")
     trace.append({"step": "analysis_llm", "info": {"provider": llm_config.provider, "model": llm_config.model}})
     if debug_raw:
         print(f"[DEBUG] model raw:\n{raw}\n")
