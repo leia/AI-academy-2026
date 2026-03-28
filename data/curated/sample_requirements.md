@@ -1,7 +1,5 @@
 # Sample Requirements
 
-# Sample Requirements
-
 <!--
 source: curated
 type: requirement
