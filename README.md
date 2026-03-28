@@ -11,6 +11,22 @@ Instead of generating more content, this system **questions, structures, and eva
 
 ---
 
+## 🎯 Use Cases
+
+### Delivery Risk Reduction
+- Identify unclear requirements early
+- Prevent scope misunderstandings
+
+### Engineering Support
+- Generate clarification questions
+- Improve requirement quality before implementation
+
+### Knowledge Navigation
+- Query project documentation
+- Extract key information quickly
+
+---
+
 ## 🌟 Core Capabilities
 
 This system focuses on practical, delivery-oriented capabilities:
@@ -104,6 +120,7 @@ User Input
 
 ### 🔧 Tool-based Processing
 - Uses lightweight tools to guide analysis
+- Tool planner is **LLM-driven**: the planner asks the LLM which helper tools to run; chosen tools are logged in the trace.
 - Combines deterministic heuristics with LLM reasoning:
   - **Deterministic layer**: regex/pattern ambiguity detector, heuristic risk weights, templated follow‑ups.
   - **LLM layer**: fills templated questions, rewrites/normalizes risks, refines summaries, and runs the reflection critique.
@@ -194,10 +211,9 @@ Open http://localhost:5173.
 ---
 
 ### 🗂 Data & Index
-- Place sources in data/curated/ (txt/md/pdf). Optional QA-only docs go in data/curated/qa/ (QA prefers these; analyze uses all).
-- Ingestion normalizes embeddings and builds a FAISS inner-product index (cosine-style). Rebuild anytime you add/move files or change embed provider/model: ai-analyze
-  ingest data/curated --force.
-- Index artifacts live in data/index/ (index.faiss + docstore.json).
+- Place sources in data/curated/ (txt/md/pdf); QA-only docs in `data/curated/qa/` (QA prefers these; analyze uses all).
+- Ingestion normalizes embeddings and builds a FAISS inner-product (cosine-style) index. Rebuild after adding/moving files or changing embed provider/model: `ai-analyze ingest data/curated --force`.
+- Index artifacts: `data/index/index.faiss` + `data/index/docstore.json`
 - Practical k: defaults to 5; you can raise it as needed (hard cap currently 20 in UI/CLI; adjust if you raise it).
 
 ---
@@ -223,7 +239,8 @@ Bands: risk low 0.0–0.2, medium 0.2–0.6, high 0.6–1.0; confidence low 0.0�
 - OpenAI: `OPENAI_API_KEY`, `OPENAI_MODEL` (e.g., `gpt-4o-mini`), `OPENAI_EMBED_MODEL` (e.g., `text-embedding-3-small`)  
 - Claude: `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`  
 - Gemini: `GOOGLE_API_KEY`, `GEMINI_MODEL` (e.g., `gemini-1.5-pro-latest`), `GEMINI_EMBED_MODEL` (e.g., `models/gemini-embedding-001`)  
-Ports: API 8787, UI 5173.
+- Ports: API `8787`, UI `5173`.
+- Generation runs with `temperature(randomness)=0` for stability (configurable in code if needed).
 
 ---
 
@@ -257,22 +274,6 @@ docs/              # architecture, demo, quickstart
 tests/             # fixtures and smoke placeholder
 scripts/dev.ps1    # start API + frontend together
 ```
-
----
-
-## 🎯 Use Cases
-
-### Delivery Risk Reduction
-- Identify unclear requirements early
-- Prevent scope misunderstandings
-
-### Engineering Support
-- Generate clarification questions
-- Improve requirement quality before implementation
-
-### Knowledge Navigation
-- Query project documentation
-- Extract key information quickly
 
 ---
 

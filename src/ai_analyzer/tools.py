@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from typing import List, Tuple
 
@@ -131,3 +132,53 @@ def decide_tools(heuristics: List[str]) -> List[str]:
     else:
         tools.append("question_generator")  # still useful even without detected ambiguities
     return tools
+
+
+# ---- LLM tool selection (optional) ----
+
+LLM_TOOL_SET = {
+    "ambiguity_detector": "Detect vague or underspecified statements.",
+    "question_generator": "Generate follow-up clarification questions.",
+    "risk_scorer": "Assign delivery risk score and rationale.",
+}
+
+
+def choose_tools_llm(requirement: str, heuristics: List[str], llm_config) -> List[str]:
+    """
+    Minimal tool-calling style planner: ask the LLM which helper tools to run.
+    Falls back to decide_tools on any error.
+    """
+    try:
+        from ai_analyzer.llm import chat  # local import to avoid cycles
+    except Exception:
+        return decide_tools(list(heuristics))
+
+    heuristics_text = "\n".join(f"- {h}" for h in heuristics) if heuristics else "None"
+    tool_list = "\n".join([f"- {name}: {desc}" for name, desc in LLM_TOOL_SET.items()])
+    prompt = [
+        {
+            "role": "system",
+            "content": "You are a planner. Choose the minimal set of tools needed to analyze the requirement.",
+        },
+        {
+            "role": "user",
+            "content": f"""Requirement:
+{requirement}
+
+Heuristic signals:
+{heuristics_text}
+
+Available tools:
+{tool_list}
+
+Return ONLY JSON: {{"tools": ["tool_name", ...]}}""",
+        },
+    ]
+    try:
+        raw = chat(prompt, llm_config, max_tokens=200, mime="application/json")
+        data = json.loads(raw)
+        chosen = data.get("tools", []) if isinstance(data, dict) else []
+        filtered = [t for t in chosen if t in LLM_TOOL_SET]
+        return filtered or decide_tools(list(heuristics))
+    except Exception:
+        return decide_tools(list(heuristics))

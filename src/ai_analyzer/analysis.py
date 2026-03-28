@@ -18,7 +18,9 @@ from ai_analyzer.reflection import reflect
 from ai_analyzer.tools import (
     detect_ambiguities,
     score_risk,
-    decide_tools, generate_questions
+    decide_tools,
+    generate_questions,
+    choose_tools_llm,
 )
 from ai_analyzer.prompts import ANALYSIS_SYSTEM, ANALYSIS_USER_TEMPLATE
 
@@ -73,8 +75,8 @@ def run_analysis(
     trace = trace if trace is not None else []
     heuristics = detect_ambiguities(requirement)
     trace.append({"step": "heuristics", "info": {"count": len(heuristics)}})
-    tools = decide_tools(heuristics)
-    trace.append({"step": "planner", "info": {"tools": tools}})
+    tools = choose_tools_llm(requirement, heuristics, llm_config)
+    trace.append({"step": "planner_llm", "info": {"tools": tools}})
     messages = build_prompt(requirement, contexts, heuristics)
     raw = chat(messages, llm_config, mime="application/json")
     trace.append({"step": "analysis_llm", "info": {"provider": llm_config.provider, "model": llm_config.model}})
